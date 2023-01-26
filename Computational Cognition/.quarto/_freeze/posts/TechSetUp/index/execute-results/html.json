@@ -1,0 +1,14 @@
+{
+  "hash": "6688d0a40d881a1eed446e2de2b658cb",
+  "result": {
+    "markdown": "---\ntitle: \"Traces\"\nauthor: \"Bram Goh\"\ndate: \"2023-01-25\"\ncategories: [code]\nimage: \"image.jpg\"\n---\n\n\nGenerating a memory trace (random indices)\n\n\n::: {.cell}\n\n```{.r .cell-code}\nvalues <- c(rep(-1, 30), rep(0, 30), rep(1, 30))\na <- sample(values, 10, replace = TRUE)\nprint(a)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n [1] -1 -1  1 -1  0  1 -1 -1  0  1\n```\n:::\n:::\n\n\n![Hintzman (1986)](images/Screen%20Shot%202023-01-25%20at%205.11.17%20PM.png){fig-align=\"right\"}\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

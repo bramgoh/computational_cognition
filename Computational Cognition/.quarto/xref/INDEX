@@ -19,5 +19,11 @@
   },
   "posts/welcome/Welcome_index.qmd": {
     "Welcome_index.html": "33eafbd7"
+  },
+  "posts/Hintzman1/index.qmd": {
+    "index.html": "105442ad"
+  },
+  "posts/TechSetUp/index.qmd": {
+    "index.html": "7172602b"
   }
 }

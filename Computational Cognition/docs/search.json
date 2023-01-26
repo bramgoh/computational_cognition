@@ -11,14 +11,14 @@
     "href": "index.html",
     "title": "Computational Cognition",
     "section": "",
-    "text": "A blog record of a computational cognition journey\n\n\n\n\n\n\n\n\n  \n\n\n\n\nTraces\n\n\n\n\n\n\n\ncode\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\nNo matching items"
+    "text": "A blog record of a computational cognition journey\n\n\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nmisc\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nSetting up the Techymabobs\n\n\n\n\n\n\n\ntech\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nTraces\n\n\n\n\n\n\n\ncode\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "posts/welcome/index.html",
     "href": "posts/welcome/index.html",
     "title": "Welcome To My Blog",
     "section": "",
-    "text": "Still figuring out this Quarto thing…\nLearning by trial and error\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+    "text": "I’m a millennial and technology is not my forte.\nIn spite of that, here is my attempt at a blog record of things I’ve learned. Here’s to jumping off the deep end…"
   },
   {
     "objectID": "about.html",
@@ -26,5 +26,19 @@
     "title": "About",
     "section": "",
     "text": "About this blog"
+  },
+  {
+    "objectID": "posts/Hintzman1/index.html",
+    "href": "posts/Hintzman1/index.html",
+    "title": "Traces",
+    "section": "",
+    "text": "Generating a memory trace (random indices)\n\nvalues <- c(rep(-1, 30), rep(0, 30), rep(1, 30))\na <- sample(values, 10, replace = TRUE)\nprint(a)\n\n [1]  1 -1  1  0  1 -1 -1  1 -1 -1\n\n\n\n\n\nHintzman (1986)"
+  },
+  {
+    "objectID": "posts/TechSetUp/index.html",
+    "href": "posts/TechSetUp/index.html",
+    "title": "Setting up the Techymabobs",
+    "section": "",
+    "text": "Matt introduced me to a ton of new software to download and familiarize myself with.\nQuarto blog\nI updated both R and RStudio, and the Quarto blog works as intended. However, remember to NOT rename the index.qmd etc. files, as that interferes with the seamless rendering process and the blog will not be updated as you render.\nDragging and dropping images still does not work. It would be really convenient if this could be rectified.\nSometime in the near future, I need to refresh my Rmarkdown code wrt to stylistic features, so I can do away with the default blog visuals.\nZotero\nI downloaded Zotero and the Safari plugin, and it seems to work fine. It syncs with R and with Microsoft Word, and my brief tests don’t raise any issues.\nI do have to note that most articles downloaded from Google Scholar do not contain DOI information, so this is something I still have to add in manually.\nGithub Desktop\nDownloading this was the easy part. Committing to changes and publishing/pushing was also not too difficult to figure out.\nThe only roadblock I’ve faced thus far is obtaining the blog URL. After setting the output directory to docs, I get a message saying that the pages failed to be built? I’m not sure how to fix this.\nI’ve noticed also that, while I’ve downloaded Github Desktop, I can’t seem to get the “Create a git repository” option when I start a new project in RStudio. An hour of Googling and troubleshooting has gotten me nowhere, so I’m stumped for now."
   }
 ]
