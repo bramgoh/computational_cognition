@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Bram Goh">
-<meta name="dcterms.date" content="2023-01-25">
+<meta name="dcterms.date" content="2023-01-26">
 
-<title>Computational Cognition - Traces</title>
+<title>Computational Cognition - Reproducing Hintzman’s MINERVA (Part 1)</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -168,7 +168,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Traces</h1>
+      <h1 class="title">Reproducing Hintzman’s MINERVA (Part 1)</h1>
                                 <div class="quarto-categories">
                 <div class="quarto-category">code</div>
               </div>
@@ -188,7 +188,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">January 25, 2023</p>
+        <p class="date">January 26, 2023</p>
       </div>
     </div>
     
@@ -206,21 +206,81 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<p>Generating a memory trace (random indices)</p>
+<p>#Generating category prototypes and exemplars</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>values <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">30</span>), <span class="fu">rep</span>(<span class="dv">0</span>, <span class="dv">30</span>), <span class="fu">rep</span>(<span class="dv">1</span>, <span class="dv">30</span>))</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>a <span class="ot">&lt;-</span> <span class="fu">sample</span>(values, <span class="dv">10</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(a)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> [1]  1 -1  1  0  1 -1 -1  1 -1 -1</code></pre>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
 </div>
+<div class="cell-output cell-output-stderr">
+<pre><code>✔ ggplot2 3.3.6     ✔ purrr   0.3.4
+✔ tibble  3.1.7     ✔ dplyr   1.0.9
+✔ tidyr   1.2.0     ✔ stringr 1.4.0
+✔ readr   2.1.2     ✔ forcats 0.5.1</code></pre>
 </div>
-<div class="quarto-figure quarto-figure-right">
-<figure class="figure">
-<p><img src="images/Screen Shot 2023-01-25 at 5.11.17 PM.png" class="img-fluid figure-img"></p>
-<p></p><figcaption class="figure-caption">Hintzman (1986)</figcaption><p></p>
-</figure>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()</code></pre>
 </div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">30</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>values <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">50</span>), <span class="fu">rep</span>(<span class="dv">1</span>, <span class="dv">50</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>protoA <span class="ot">&lt;-</span> <span class="fu">sample</span>(values, <span class="dv">23</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>protoB <span class="ot">&lt;-</span> <span class="fu">sample</span>(values, <span class="dv">23</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>protoC <span class="ot">&lt;-</span> <span class="fu">sample</span>(values, <span class="dv">23</span>, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>feat_index <span class="ot">&lt;-</span> <span class="dv">11</span><span class="sc">:</span><span class="dv">23</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>distort_low <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  change_index <span class="ot">&lt;-</span> <span class="fu">sample</span>(feat_index, <span class="dv">2</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  x_new <span class="ot">&lt;-</span> x</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  x_new[change_index[<span class="dv">1</span>]] <span class="ot">&lt;-</span> x_new[change_index[<span class="dv">1</span>]] <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  x_new[change_index[<span class="dv">2</span>]] <span class="ot">&lt;-</span> x_new[change_index[<span class="dv">2</span>]] <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(x_new)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>distort_high <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  change_index <span class="ot">&lt;-</span> <span class="fu">sample</span>(feat_index, <span class="dv">4</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  x_new <span class="ot">&lt;-</span> x</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  x_new[change_index[<span class="dv">1</span>]] <span class="ot">&lt;-</span> x_new[change_index[<span class="dv">1</span>]] <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  x_new[change_index[<span class="dv">2</span>]] <span class="ot">&lt;-</span> x_new[change_index[<span class="dv">2</span>]] <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  x_new[change_index[<span class="dv">3</span>]] <span class="ot">&lt;-</span> x_new[change_index[<span class="dv">3</span>]] <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  x_new[change_index[<span class="dv">4</span>]] <span class="ot">&lt;-</span> x_new[change_index[<span class="dv">4</span>]] <span class="sc">*</span> <span class="sc">-</span><span class="dv">1</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(x_new)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>low_A1 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoA)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>low_A2 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoA)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>low_A3 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoA)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>low_B1 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoB)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>low_B2 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoB)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>low_B3 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoB)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>low_B4 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoB)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>low_B5 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoB)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>low_B6 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoB)</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>low_C1 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>low_C2 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>low_C3 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>low_C4 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>low_C5 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>low_C6 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>low_C7 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>low_C8 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC) </span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>low_C9 <span class="ot">&lt;-</span> <span class="fu">distort_low</span>(protoC)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>low_C_full <span class="ot">&lt;-</span> <span class="fu">rbind</span>(low_C1, low_C2, low_C3, low_C4, low_C5, low_C6, low_C7, low_C8, low_C9)</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>high_A1 <span class="ot">&lt;-</span> <span class="fu">distort_high</span>(protoA)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>high_B1 <span class="ot">&lt;-</span> <span class="fu">distort_high</span>(protoB)</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>high_C1 <span class="ot">&lt;-</span> <span class="fu">distort_high</span>(protoC)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The code works, but is very inelegant and requires a lot of copy and pasting. There has to be a way to automate this with a function so that I can simulate this whole thing 20 times.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>indexC_high <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">23</span>, <span class="dv">1</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">9</span>) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  temp <span class="ot">&lt;-</span> <span class="fu">distort_high</span>(protoC)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  indexC_high <span class="ot">&lt;-</span> <span class="fu">rbind</span>(indexC_high, temp)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This is faster, but still requires specifying the variable to store it in, the number of exemplars, the function and the prototype. Attempts to create a function to automate this failed, as the dataframe returned (e.g.&nbsp;indexC_high) was unchanged.</p>
 
 
 

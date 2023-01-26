@@ -2,9 +2,9 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/Hintzman1/index.html",
       "/posts/welcome/index.html",
-      "/posts/TechSetUp/index.html",
-      "/posts/Hintzman1/index.html"
+      "/posts/TechSetUp/index.html"
     ]
   }
 ]

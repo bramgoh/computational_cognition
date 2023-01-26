@@ -11,7 +11,7 @@
     "href": "index.html",
     "title": "Computational Cognition",
     "section": "",
-    "text": "A blog record of a computational cognition journey\n\n\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nmisc\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nSetting up the Techymabobs\n\n\n\n\n\n\n\ntech\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nTraces\n\n\n\n\n\n\n\ncode\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\nNo matching items"
+    "text": "A blog record of a computational cognition journey\n\n\n\n\n\n\n\n\n  \n\n\n\n\nReproducing Hintzman’s MINERVA (Part 1)\n\n\n\n\n\n\n\ncode\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nmisc\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nSetting up the Techymabobs\n\n\n\n\n\n\n\ntech\n\n\n\n\n\n\n\n\n\n\n\nJan 26, 2023\n\n\nBram Goh\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "posts/welcome/index.html",
@@ -30,9 +30,9 @@
   {
     "objectID": "posts/Hintzman1/index.html",
     "href": "posts/Hintzman1/index.html",
-    "title": "Traces",
+    "title": "Reproducing Hintzman’s MINERVA (Part 1)",
     "section": "",
-    "text": "Generating a memory trace (random indices)\n\nvalues <- c(rep(-1, 30), rep(0, 30), rep(1, 30))\na <- sample(values, 10, replace = TRUE)\nprint(a)\n\n [1]  1 -1  1  0  1 -1 -1  1 -1 -1\n\n\n\n\n\nHintzman (1986)"
+    "text": "#Generating category prototypes and exemplars\n\nlibrary(tidyverse)\n\n── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──\n\n\n✔ ggplot2 3.3.6     ✔ purrr   0.3.4\n✔ tibble  3.1.7     ✔ dplyr   1.0.9\n✔ tidyr   1.2.0     ✔ stringr 1.4.0\n✔ readr   2.1.2     ✔ forcats 0.5.1\n\n\n── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──\n✖ dplyr::filter() masks stats::filter()\n✖ dplyr::lag()    masks stats::lag()\n\nset.seed(30)\nvalues <- c(rep(-1, 50), rep(1, 50))\nprotoA <- sample(values, 23, replace = TRUE)\nprotoB <- sample(values, 23, replace = TRUE)\nprotoC <- sample(values, 23, replace = TRUE)\nfeat_index <- 11:23\n\ndistort_low <- function(x) {\n  change_index <- sample(feat_index, 2)\n  x_new <- x\n  x_new[change_index[1]] <- x_new[change_index[1]] * -1\n  x_new[change_index[2]] <- x_new[change_index[2]] * -1\n  return(x_new)\n}\ndistort_high <- function(x) {\n  change_index <- sample(feat_index, 4)\n  x_new <- x\n  x_new[change_index[1]] <- x_new[change_index[1]] * -1\n  x_new[change_index[2]] <- x_new[change_index[2]] * -1\n  x_new[change_index[3]] <- x_new[change_index[3]] * -1\n  x_new[change_index[4]] <- x_new[change_index[4]] * -1\n  return(x_new)\n}\n\nlow_A1 <- distort_low(protoA)\nlow_A2 <- distort_low(protoA)\nlow_A3 <- distort_low(protoA)\nlow_B1 <- distort_low(protoB)\nlow_B2 <- distort_low(protoB)\nlow_B3 <- distort_low(protoB)\nlow_B4 <- distort_low(protoB)\nlow_B5 <- distort_low(protoB)\nlow_B6 <- distort_low(protoB)\nlow_C1 <- distort_low(protoC)\nlow_C2 <- distort_low(protoC)\nlow_C3 <- distort_low(protoC)\nlow_C4 <- distort_low(protoC)\nlow_C5 <- distort_low(protoC)\nlow_C6 <- distort_low(protoC)\nlow_C7 <- distort_low(protoC)\nlow_C8 <- distort_low(protoC) \nlow_C9 <- distort_low(protoC)\n\nlow_C_full <- rbind(low_C1, low_C2, low_C3, low_C4, low_C5, low_C6, low_C7, low_C8, low_C9)\n\nhigh_A1 <- distort_high(protoA)\nhigh_B1 <- distort_high(protoB)\nhigh_C1 <- distort_high(protoC)\n\nThe code works, but is very inelegant and requires a lot of copy and pasting. There has to be a way to automate this with a function so that I can simulate this whole thing 20 times.\n\nindexC_high <- seq(1, 23, 1)\nfor(i in 1:9) {\n  temp <- distort_high(protoC)\n  indexC_high <- rbind(indexC_high, temp)\n}\n\nThis is faster, but still requires specifying the variable to store it in, the number of exemplars, the function and the prototype. Attempts to create a function to automate this failed, as the dataframe returned (e.g. indexC_high) was unchanged."
   },
   {
     "objectID": "posts/TechSetUp/index.html",
