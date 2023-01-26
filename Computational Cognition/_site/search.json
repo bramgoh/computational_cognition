@@ -1,0 +1,51 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Computational Cognition",
+    "section": "",
+    "text": "A blog record of a computational cognition journey\n\n\n\n\n\n\n\n\n  \n\n\n\n\nTraces\n\n\n\n\n\n\n\ncode\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "posts/post-with-code/index.html",
+    "href": "posts/post-with-code/index.html",
+    "title": "Traces",
+    "section": "",
+    "text": "Generating a memory trace (random indices)\n\nvalues <- c(rep(-1, 30), rep(0, 30), rep(1, 30))\na <- sample(values, 10, replace = TRUE)\nprint(a)\n\n [1]  1 -1  1 -1 -1 -1 -1  1  1  1\n\n\n\n\n\nHintzman (1986)"
+  },
+  {
+    "objectID": "posts/welcome/index.html",
+    "href": "posts/welcome/index.html",
+    "title": "Welcome To My Blog",
+    "section": "",
+    "text": "Still figuring out this Quarto thing…\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this blog"
+  },
+  {
+    "objectID": "Contents_index.html",
+    "href": "Contents_index.html",
+    "title": "Computational Cognition",
+    "section": "",
+    "text": "A blog record of a computational cognition journey\n\n\n\n\n\n\n\n\n  \n\n\n\n\nTraces\n\n\n\n\n\n\n\nnews\n\n\ncode\n\n\nanalysis\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\n  \n\n\n\n\nWelcome To My Blog\n\n\n\n\n\n\n\nnews\n\n\n\n\n\n\n\n\n\n\n\nJan 25, 2023\n\n\nBram Goh\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "posts/post-with-code/Post1_index.html",
+    "href": "posts/post-with-code/Post1_index.html",
+    "title": "Traces",
+    "section": "",
+    "text": "Generating a memory trace (random indices)\n\nvalues <- c(rep(-1, 30), rep(0, 30), rep(1, 30))\na <- sample(values, 10, replace = TRUE)\nprint(a)\n\n [1]  1  1  0  1  1 -1  1  1  0  1"
+  },
+  {
+    "objectID": "posts/welcome/Welcome_index.html",
+    "href": "posts/welcome/Welcome_index.html",
+    "title": "Welcome To My Blog",
+    "section": "",
+    "text": "Still figuring out this Quarto thing…\n\nSince this post doesn’t specify an explicit image, the first image in the post will be used in the listing page of posts."
+  }
+]

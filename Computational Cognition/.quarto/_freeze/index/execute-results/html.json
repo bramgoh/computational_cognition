@@ -1,0 +1,14 @@
+{
+  "hash": "ccc2c5a652cc4e9afd7276f007e7f302",
+  "result": {
+    "markdown": "---\ntitle: \"Computational Cognition\"\nlisting:\n  contents: posts\n  sort: \"date desc\"\n  type: default\n  categories: true\n  sort-ui: false\n  filter-ui: false\npage-layout: full\ntitle-block-banner: true\n---\n\n\nGenerating a memory trace (random indices)\n\n\n::: {.cell}\n\n```{.r .cell-code}\nvalues <- c(rep(-1, 30), rep(0, 30), rep(1, 30))\na <- sample(values, 10, replace = TRUE)\nprint(a)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n [1] -1  0 -1  0  1  0  0 -1  0  1\n```\n:::\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

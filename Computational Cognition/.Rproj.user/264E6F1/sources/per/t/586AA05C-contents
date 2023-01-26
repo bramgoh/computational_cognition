@@ -1,0 +1,12 @@
+---
+title: "Welcome To My Blog"
+author: "Bram Goh"
+date: "2023-01-25"
+categories: [news]
+---
+
+Still figuring out this Quarto thing...
+
+![](thumbnail.jpg)
+
+Since this post doesn't specify an explicit `image`, the first image in the post will be used in the listing page of posts.
