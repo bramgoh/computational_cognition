@@ -1,5 +1,0 @@
-"0","indexC_high <- seq(1, 23, 1)"
-"0","for(i in 1:9) {"
-"0","  temp <- distort_high(protoC)"
-"0","  indexC_high <- rbind(indexC_high, temp)"
-"0","}"
