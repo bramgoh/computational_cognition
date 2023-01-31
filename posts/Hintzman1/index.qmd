@@ -6,7 +6,7 @@ categories: [code]
 image: "image.jpg"
 ---
 
-#Generating category prototypes and exemplars
+# Generating category prototypes and exemplars
 
 ```{r}
 library(tidyverse)

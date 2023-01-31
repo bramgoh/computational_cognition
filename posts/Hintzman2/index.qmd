@@ -1,0 +1,109 @@
+---
+title: "Reproducing Hintzman's MINERVA (Part 2)"
+author: "Bram Goh"
+date: "2023-01-31"
+categories: [code]
+image: "image.jpg"
+---
+
+# Generating traces and calculating the echo
+
+```{r}
+library(tidyverse)
+set.seed(30)
+num_feat <- 13
+num_name <- 10
+num_trace <- num_name + num_feat
+values <- c(rep(1, 50), rep(-1, 50))
+
+# Generating exemplars with distortions
+
+gen_exemp <- function(num_exemp, num_distort) {
+  
+  name <- sample(values, num_name)
+  name_copies <- matrix(rep(name, num_exemp), nrow = num_exemp, ncol = num_name, byrow = TRUE)
+  
+  feat_raw <- t(replicate(num_exemp, sample(values, num_feat)))
+  feat_filter <- t(replicate(n = num_exemp, sample(c(rep(1, num_feat - num_distort), rep(-1, num_distort)), num_feat)))
+  
+  feat_final <- feat_raw * feat_filter
+
+  exemp <- cbind(name_copies, feat_final)
+  
+  return(exemp)
+}
+```
+
+```{r}
+
+empty_feat <- rep(0, num_feat)
+
+abstraction <- function(n1, n2, n3, num_distort) {
+
+# Generating traces and probes
+a <- gen_exemp(n1, num_distort)
+probe_a <- c(a[1, 1:num_name], empty_feat)
+b <- gen_exemp(n2, num_distort)
+probe_b <- c(b[1, 1:num_name], empty_feat)
+c <- gen_exemp(n3, num_distort)
+probe_c <- c(c[1, 1:num_name], empty_feat)
+  
+sm <- rbind(a, b, c)
+  
+# Echo activation function
+echo_activation <- function(probe, sec_mem) {
+  e_int <- c()
+      for(i in 1:nrow(sec_mem)){
+          n_rel <- 0
+          temp_sim <- 0
+              for(j in 1:num_trace){
+                   current <- probe[j] * sec_mem[i, j]
+                   temp_sim <- current + temp_sim
+                          if(probe[j] != 0 & sec_mem[i, j] != 0) {
+                                     n_rel <- n_rel + 1
+      }
+}
+trace_sim <- temp_sim/n_rel
+trace_act <- trace_sim^3
+e_int <- c(e_int, trace_act)
+      }
+  return(e_int)
+}
+
+activs_a <- echo_activation(probe_a, sm)
+activs_b <- echo_activation(probe_b, sm)
+activs_c <- echo_activation(probe_c, sm)
+
+# Echo content function
+
+echo_content <- function(acts, sec_mem) {
+  e_cont <- c()
+  for(j in 1:num_trace){
+    temp_cont <- 0
+    for(i in 1:nrow(sec_mem)){
+      current <- acts[i] * sec_mem[i, j]
+      temp_cont <- current + temp_cont
+    }
+    e_cont <- c(e_cont, temp_cont)
+  }
+  return(e_cont)
+}
+
+# Calculating echo intensity and probe-echo correlations
+echo_a <- round(echo_content(activs_a, sm), 3)
+cor_a <- cor(probe_a, echo_a)
+int_a <- sum(activs_a)
+echo_b <- round(echo_content(activs_b, sm), 3)
+cor_b <- cor(probe_b, echo_b)
+int_b <- sum(activs_b)
+echo_c <- round(echo_content(activs_c, sm), 3)
+cor_c <- cor(probe_c, echo_c)
+int_c <- sum(activs_c)
+
+df <- data.frame(corr = c(cor_a, cor_b, cor_c), intensity = c(int_a, int_b, int_c))
+rownames(df) <- c("catA", "catB", "catC")
+return(df)
+}
+```
+
+I am close to replicating the Abstraction exercise in Hintzman (1986). I've made a mistake, however, as I am supposed to calculate prototype-echo correlations, not probe-echo correlations. I'll need to rectify this, as well as amend the code to allow for 20 simulations, so that I can calculate mean prototype-echo correlations for the 3-, 6-, and 9-exemplar categories.
