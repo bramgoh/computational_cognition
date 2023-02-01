@@ -3,7 +3,7 @@ title: "Reproducing Hintzman's MINERVA (Part 3)"
 author: "Bram Goh"
 date: "2023-02-01"
 categories: [code]
-image: "image.jpg"
+image: "Screenshot 2023-02-01 at 10.24.41 AM.png"
 ---
 
 # First (completed) attempt at the Abstraction exercise
