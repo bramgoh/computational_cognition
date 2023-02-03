@@ -96,13 +96,13 @@ echo_content <- function(acts, sec_mem) {
 
 # Calculating echo intensity and probe-echo correlations
 echo_a <- round(echo_content(activs_a, sm), 3)
-cor_a <- cor(proto_a, echo_a)
+cor_a <- cor(proto_a[(num_name + 1):num_trace], echo_a[(num_name + 1):num_trace])
 int_a <- sum(activs_a)
 echo_b <- round(echo_content(activs_b, sm), 3)
-cor_b <- cor(proto_b, echo_b)
+cor_b <- cor(proto_b[(num_name + 1):num_trace], echo_b[(num_name + 1):num_trace])
 int_b <- sum(activs_b)
 echo_c <- round(echo_content(activs_c, sm), 3)
-cor_c <- cor(proto_c, echo_c)
+cor_c <- cor(proto_c[(num_name + 1):num_trace], echo_c[(num_name + 1):num_trace])
 int_c <- sum(activs_c)
 
 output_mat <- rbind(proto_a, echo_a, proto_b, echo_b, proto_c, echo_c)
@@ -110,7 +110,7 @@ return(output_mat)
 }
 ```
 
-I changed the output to a matrix with the probes and echoes for the 3 categories. However, why do the echoes have values greater than 1 and less than -1? That's not what Hintzman got.
+I edited the correlation code to reflect only the correlation for the 13 stimulus features (excluding the 10 name features; clearly, I misunderstood Hintzman the first time). Also, I changed the output to a matrix with the probes and echoes for the 3 categories. However, why do the echoes have values greater than 1 and less than -1? That's not what Hintzman got.
 
 ```{r}
 replicate(20, abstraction(3,6,9,4))
