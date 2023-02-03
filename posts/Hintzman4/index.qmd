@@ -1,0 +1,132 @@
+---
+title: "Reproducing Hintzman's MINERVA (Part 4)"
+author: "Bram Goh"
+date: "2023-02-03"
+categories: [code]
+image: "Screenshot 2023-02-03 at 2.29.15 PM.png"
+---
+
+# Improving on the Abstraction exercise code and plotting prototypes and echoes
+
+```{r}
+library(tidyverse)
+set.seed(30)
+num_feat <- 13
+num_name <- 10
+num_trace <- num_name + num_feat
+values <- c(rep(1, 50), rep(-1, 50))
+
+empty_feat <- rep(0, num_feat)
+
+abstraction <- function(num_a, num_b, num_c, num_distort) {
+
+# Generating prototype
+  
+gen_proto <- function() {
+   proto <- sample(values, num_trace, replace = TRUE)
+   return(proto)
+}
+
+proto_a <- gen_proto()
+proto_b <- gen_proto()
+proto_c <- gen_proto()
+
+# Generating exemplars with distortions
+
+gen_exemp <- function(proto, num_exemp, num_distort) {
+  
+  proto_copies <- matrix(rep(proto, num_exemp), nrow = num_exemp, ncol = num_trace, byrow = TRUE)
+  
+  name_matrix_ones <- matrix(1, nrow = num_exemp, ncol = num_name)
+  feat_matrix_distort <- t(replicate(n = num_exemp, sample(c(rep(1, num_feat - num_distort), rep(-1, num_distort)), num_feat)))
+  distort_filter <- cbind(name_matrix_ones, feat_matrix_distort)
+
+  exemp <- proto_copies * distort_filter
+  return(exemp)
+}
+  
+# Generating traces and probes
+a <- gen_exemp(proto_a, num_a, num_distort)
+probe_a <- c(a[1, 1:num_name], empty_feat)
+b <- gen_exemp(proto_b, num_b, num_distort)
+probe_b <- c(b[1, 1:num_name], empty_feat)
+c <- gen_exemp(proto_c, num_c, num_distort)
+probe_c <- c(c[1, 1:num_name], empty_feat)
+  
+sm <- rbind(a, b, c)
+  
+# Echo activation function
+echo_activation <- function(probe, sec_mem) {
+  e_activs <- c()
+      for(i in 1:nrow(sec_mem)){
+          n_rel <- 0
+          temp_sim <- 0
+              for(j in 1:num_trace){
+                   current <- probe[j] * sec_mem[i, j]
+                   temp_sim <- current + temp_sim
+                          if(probe[j] != 0 & sec_mem[i, j] != 0) {
+                                     n_rel <- n_rel + 1
+      }
+}
+trace_sim <- temp_sim/n_rel
+trace_act <- trace_sim^3
+e_activs <- c(e_activs, trace_act)
+      }
+  return(e_activs)
+}
+
+activs_a <- echo_activation(probe_a, sm)
+activs_b <- echo_activation(probe_b, sm)
+activs_c <- echo_activation(probe_c, sm)
+
+# Echo content function
+
+echo_content <- function(acts, sec_mem) {
+  e_cont <- c()
+  for(j in 1:num_trace){
+    temp_cont <- 0
+    for(i in 1:nrow(sec_mem)){
+      current <- acts[i] * sec_mem[i, j]
+      temp_cont <- current + temp_cont
+    }
+    e_cont <- c(e_cont, temp_cont)
+  }
+  return(e_cont)
+}
+
+# Calculating echo intensity and probe-echo correlations
+echo_a <- round(echo_content(activs_a, sm), 3)
+cor_a <- cor(proto_a, echo_a)
+int_a <- sum(activs_a)
+echo_b <- round(echo_content(activs_b, sm), 3)
+cor_b <- cor(proto_b, echo_b)
+int_b <- sum(activs_b)
+echo_c <- round(echo_content(activs_c, sm), 3)
+cor_c <- cor(proto_c, echo_c)
+int_c <- sum(activs_c)
+
+output_mat <- rbind(proto_a, echo_a, proto_b, echo_b, proto_c, echo_c)
+return(output_mat)
+}
+```
+
+I changed the output to a matrix with the probes and echoes for the 3 categories. However, why do the echoes have values greater than 1 and less than -1? That's not what Hintzman got.
+
+```{r}
+replicate(20, abstraction(3,6,9,4))
+```
+
+Using the replicate function allows me to simulate multiple participants easily.
+
+Next, I need to plot the prototypes against the echoes in a "histogram". After several failed attempts at doing so with ggplot, I finally came to the conclusion that I had to use the basic R plotting package. An example of the code is below.
+
+```{r}
+graph_in <- abstraction(3, 6, 9, 4)
+par = (mfrow = c (1, 2))
+barplot(graph_in[5, ], main = "proto_a")
+barplot(graph_in[6, ], main = "echo_a")
+```
+
+The code works, though it seems to indicate that the name features are a little different in the echo than in the probe. That might make sense, since the probe would not be highly similar to traces from a different category, which could affect the "purity" of the echo.
+
+I haven't figured out a way to write a function to easily churn out the 6 graphs. Functions only return 1 output, and I'm not sure the basic plotting package in R allows for saving a graph containing multiple layers as a variable.
