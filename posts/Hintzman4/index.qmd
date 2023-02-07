@@ -1,132 +1,176 @@
 ---
 title: "Reproducing Hintzman's MINERVA (Part 4)"
 author: "Bram Goh"
-date: "2023-02-03"
+date: "2023-02-07"
 categories: [code]
 image: "Screenshot 2023-02-03 at 2.29.15 PM.png"
 ---
 
-# Improving on the Abstraction exercise code and plotting prototypes and echoes
+# Generalizing the code for more flexibility and brief thoughts on cosine similarity
+
+First, I need to clean up my code: name variables such that I don't forget what they mean and define functions outside of other functions. Second, I need to generalize the code so that the number of categories is not hard coded .
 
 ```{r}
 library(tidyverse)
 set.seed(30)
-num_feat <- 13
-num_name <- 10
-num_trace <- num_name + num_feat
-values <- c(rep(1, 50), rep(-1, 50))
+num_of_pattern_feat <- 13
+num_of_name_feat <- 10
+num_of_trace_feat <- num_of_name_feat + num_of_pattern_feat
+feat_values <- c(rep(1, 50), rep(-1, 50))
+num_to_distort <- 4
 
-empty_feat <- rep(0, num_feat)
 
-abstraction <- function(num_a, num_b, num_c, num_distort) {
 
-# Generating prototype
+
+# Generating prototype function
   
 gen_proto <- function() {
-   proto <- sample(values, num_trace, replace = TRUE)
+   proto <- sample(feat_values, num_of_trace_feat, replace = TRUE)
    return(proto)
 }
 
-proto_a <- gen_proto()
-proto_b <- gen_proto()
-proto_c <- gen_proto()
+# Generating prototype copies --> yields proto_copies_matrix
 
-# Generating exemplars with distortions
-
-gen_exemp <- function(proto, num_exemp, num_distort) {
-  
-  proto_copies <- matrix(rep(proto, num_exemp), nrow = num_exemp, ncol = num_trace, byrow = TRUE)
-  
-  name_matrix_ones <- matrix(1, nrow = num_exemp, ncol = num_name)
-  feat_matrix_distort <- t(replicate(n = num_exemp, sample(c(rep(1, num_feat - num_distort), rep(-1, num_distort)), num_feat)))
-  distort_filter <- cbind(name_matrix_ones, feat_matrix_distort)
-
-  exemp <- proto_copies * distort_filter
-  return(exemp)
-}
-  
-# Generating traces and probes
-a <- gen_exemp(proto_a, num_a, num_distort)
-probe_a <- c(a[1, 1:num_name], empty_feat)
-b <- gen_exemp(proto_b, num_b, num_distort)
-probe_b <- c(b[1, 1:num_name], empty_feat)
-c <- gen_exemp(proto_c, num_c, num_distort)
-probe_c <- c(c[1, 1:num_name], empty_feat)
-  
-sm <- rbind(a, b, c)
-  
-# Echo activation function
-echo_activation <- function(probe, sec_mem) {
-  e_activs <- c()
-      for(i in 1:nrow(sec_mem)){
-          n_rel <- 0
-          temp_sim <- 0
-              for(j in 1:num_trace){
-                   current <- probe[j] * sec_mem[i, j]
-                   temp_sim <- current + temp_sim
-                          if(probe[j] != 0 & sec_mem[i, j] != 0) {
-                                     n_rel <- n_rel + 1
-      }
-}
-trace_sim <- temp_sim/n_rel
-trace_act <- trace_sim^3
-e_activs <- c(e_activs, trace_act)
-      }
-  return(e_activs)
-}
-
-activs_a <- echo_activation(probe_a, sm)
-activs_b <- echo_activation(probe_b, sm)
-activs_c <- echo_activation(probe_c, sm)
-
-# Echo content function
-
-echo_content <- function(acts, sec_mem) {
-  e_cont <- c()
-  for(j in 1:num_trace){
-    temp_cont <- 0
-    for(i in 1:nrow(sec_mem)){
-      current <- acts[i] * sec_mem[i, j]
-      temp_cont <- current + temp_cont
-    }
-    e_cont <- c(e_cont, temp_cont)
+gen_proto_copies <- function(input_vector) {
+  full_proto_copies_matrix <- c()
+  for(i in input_vector) {
+    proto_single <- gen_proto()
+    proto_copies <- matrix(rep(proto_single, i), nrow = i, ncol = num_of_trace_feat, byrow = TRUE)
+    full_proto_copies_matrix <- rbind(full_proto_copies_matrix, proto_copies)
   }
-  return(e_cont)
+  return(full_proto_copies_matrix)
 }
 
-# Calculating echo intensity and probe-echo correlations
-echo_a <- round(echo_content(activs_a, sm), 3)
-cor_a <- cor(proto_a[(num_name + 1):num_trace], echo_a[(num_name + 1):num_trace])
-int_a <- sum(activs_a)
-echo_b <- round(echo_content(activs_b, sm), 3)
-cor_b <- cor(proto_b[(num_name + 1):num_trace], echo_b[(num_name + 1):num_trace])
-int_b <- sum(activs_b)
-echo_c <- round(echo_content(activs_c, sm), 3)
-cor_c <- cor(proto_c[(num_name + 1):num_trace], echo_c[(num_name + 1):num_trace])
-int_c <- sum(activs_c)
+# Generating traces in secondary memory with distortion --> yields memory_matrix
 
-output_mat <- rbind(proto_a, echo_a, proto_b, echo_b, proto_c, echo_c)
-return(output_mat)
+gen_secondary_memory <- function(input_vector, proto_copies_matrix) {
+  total_num_traces_in_memory <- sum(input_vector)
+  matrix_of_ones_for_name <- matrix(1, nrow = total_num_traces_in_memory, ncol = num_of_name_feat)
+  matrix_of_pattern_distort <- t(replicate(n = total_num_traces_in_memory, sample(c(rep(1, num_of_pattern_feat - num_to_distort), rep(-1, num_to_distort)), num_of_pattern_feat)))
+  distort_filter <- cbind(matrix_of_ones_for_name, matrix_of_pattern_distort)
+  distorted_memories <- proto_copies_matrix * distort_filter
+return(distorted_memories)
+}
+  
+# Extracting unique prototypes (one for each category) --> yields proto_matrix
+
+extract_unique_proto <- function(input_vector, proto_copies_matrix) {
+  full_unique_proto_matrix <- c()
+  row_counter <- 0
+  for(i in input_vector) {
+    proto_current <- proto_copies_matrix[row_counter + 1, ]
+    full_unique_proto_matrix <- rbind(full_unique_proto_matrix, proto_current)
+    row_counter <- row_counter + i
+  }
+return(full_unique_proto_matrix)
+}
+
+# Generating probes from prototypes --> yields probe_matrix
+
+gen_probes_from_proto <- function(proto_matrix) {
+  matrix_of_ones_for_name <- matrix(1, nrow = nrow(proto_matrix), ncol = num_of_name_feat)
+  matrix_of_zeroes_for_pattern <- matrix(0, nrow = nrow(proto_matrix), ncol = num_of_pattern_feat)
+  probe_filter <- cbind(matrix_of_ones_for_name, matrix_of_zeroes_for_pattern)
+  probe_unique_matrix <- proto_matrix * probe_filter
+  return(probe_unique_matrix)
+}
+
+# Echo activation function --> yields activations_matrix
+calc_echo_activations <- function(probe_matrix, memory_matrix) {
+full_probe_activations_matrix <- c()
+  for(probe in 1:nrow(probe_matrix)) {
+    all_activations_for_each_probe <- c()
+    for(memory in 1:nrow(memory_matrix)) {
+      num_of_relevant_features <- 0
+      similarity_temp <- 0
+      for(feat in 1:num_of_trace_feat) {
+        current_product <- probe_matrix[probe, feat] * memory_matrix[memory, feat]
+        similarity_temp <- similarity_temp + current_product
+          if(probe_matrix[probe, feat] != 0 & memory_matrix[memory, feat] != 0) {
+            num_of_relevant_features <- num_of_relevant_features + 1
+          }
+    }
+    trace_similarity <- similarity_temp/num_of_relevant_features
+    trace_activation <- trace_similarity ^ 3
+    all_activations_for_each_probe <- c(all_activations_for_each_probe, trace_activation)
+  }
+full_probe_activations_matrix <- rbind(full_probe_activations_matrix, all_activations_for_each_probe)
+}
+return(full_probe_activations_matrix)
+}
+
+# Echo intensity function --> yields intensity_matrix
+calc_echo_intensity <- function(activations_matrix) {
+  full_intensity_matrix <- c()
+  for(probe in 1:nrow(activations_matrix)) {
+    echo_intensity_for_probe <- sum(activations_matrix[probe, ])
+    full_intensity_matrix <- c(full_intensity_matrix, echo_intensity_for_probe) 
+  }
+  return(full_intensity_matrix)
+}
+
+# Echo content function --> yields content_matrix
+
+calc_echo_content <- function(activations_matrix, memory_matrix) {
+  full_echo_content_matrix <- c()
+  for(probe in 1:nrow(activations_matrix)) {
+    echo_content_for_each_probe <- c()
+    for(feat in 1:num_of_trace_feat){
+      content_temp <- 0
+        for(memory in 1:nrow(memory_matrix)) {
+          current_product <- activations_matrix[probe, memory] * memory_matrix[memory, feat]
+          content_temp <- content_temp + current_product
+        }
+      echo_content_for_each_probe <- c(echo_content_for_each_probe, content_temp)
+    }
+    full_echo_content_matrix <- rbind(full_echo_content_matrix, echo_content_for_each_probe)
+  }
+  return(full_echo_content_matrix)
+}
+
+# Calculating prototype-echo correlation --> yields correlation_matrix
+
+calc_proto_echo_corr <- function(proto_matrix, content_matrix) {
+  full_correlation_matrix <- c()
+  for(proto in 1:nrow(proto_matrix)) {
+    correlation_current <- cor(proto_matrix[proto, ], content_matrix[proto, ])
+    full_correlation_matrix <- c(full_correlation_matrix, correlation_current)
+  }
+  return(full_correlation_matrix)
 }
 ```
 
-I edited the correlation code to reflect only the correlation for the 13 stimulus features (excluding the 10 name features; clearly, I misunderstood Hintzman the first time). Also, I changed the output to a matrix with the probes and echoes for the 3 categories. However, why do the echoes have values greater than 1 and less than -1? That's not what Hintzman got.
-
 ```{r}
-replicate(20, abstraction(3,6,9,4))
+simulate_name_as_probe_calc_corr <- function(input_vector) {
+  proto_copies_matrix <- gen_proto_copies(input_vector)
+  memory_matrix <- gen_secondary_memory(input_vector, proto_copies_matrix)
+  proto_matrix <- extract_unique_proto(input_vector, proto_copies_matrix)
+  probe_matrix <- gen_probes_from_proto(proto_matrix)
+  activations_matrix <- calc_echo_activations(probe_matrix, memory_matrix)
+  content_matrix <- calc_echo_content(activations_matrix, memory_matrix)
+  correlation_matrix <- calc_proto_echo_corr(proto_matrix, content_matrix)
+  return(correlation_matrix)
+}
 ```
 
-Using the replicate function allows me to simulate multiple participants easily.
-
-Next, I need to plot the prototypes against the echoes in a "histogram". After several failed attempts at doing so with ggplot, I finally came to the conclusion that I had to use the basic R plotting package. An example of the code is below.
-
 ```{r}
-graph_in <- abstraction(3, 6, 9, 4)
-par = (mfrow = c (1, 2))
-barplot(graph_in[5, ], main = "proto_a")
-barplot(graph_in[6, ], main = "echo_a")
+simulate_name_as_probe_calc_corr(c(3, 6, 9))
 ```
 
-The code works, though it seems to indicate that the name features are a little different in the echo than in the probe. That might make sense, since the probe would not be highly similar to traces from a different category, which could affect the "purity" of the echo.
+Finally, after much troubleshooting, it finally seems to work as intended. Time to simulate 20 subjects as Hintzman did and compare the mean prototype-echo correlations.
 
-I haven't figured out a way to write a function to easily churn out the 6 graphs. Functions only return 1 output, and I'm not sure the basic plotting package in R allows for saving a graph containing multiple layers as a variable.
+```{r}
+my_corr <- t(replicate(20, simulate_name_as_probe_calc_corr(c(3,6,9))))
+corr_means <- c(mean(my_corr[ ,1]), mean(my_corr[ , 2]), mean(my_corr[ , 3]))
+corr_sds <- c(sd(my_corr[ ,1]), sd(my_corr[ , 2]), sd(my_corr[ , 3]))
+corr_means
+corr_sds
+```
+
+Interesting that my mean prototype-echo correlations are higher than Hintzman's, while my standard deviations are smaller. I'll need to verify these values with Matt.
+
+As an aside, we had a conversation about cosine similarity and how it doesn't capture differences in vector length, only in the difference in degree.
+
+-   What implications are there for memory? Hintzman conceptualizes memories as -1s or 1s, similar to how computers are able to code complex information into 0s and 1s. Thus, could vector length be already a built-in consideration, as one of the many features?
+
+-   Given the bar chart diagram Matt drew, where the two bar charts are identical in their positive and negative direction figuration, but differ in the length of the bar, that makes me recall an explanation of correlation similarity that I learnt in class. Do both cosine and correlation similarity not capture vector length?

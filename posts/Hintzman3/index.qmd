@@ -1,12 +1,12 @@
 ---
 title: "Reproducing Hintzman's MINERVA (Part 3)"
 author: "Bram Goh"
-date: "2023-02-01"
+date: "2023-02-03"
 categories: [code]
-image: "Screenshot 2023-02-01 at 10.24.41 AM.png"
+image: "Screenshot 2023-02-03 at 2.29.15 PM.png"
 ---
 
-# First (completed) attempt at the Abstraction exercise
+# Improving on the Abstraction exercise code and plotting prototypes and echoes
 
 ```{r}
 library(tidyverse)
@@ -96,25 +96,37 @@ echo_content <- function(acts, sec_mem) {
 
 # Calculating echo intensity and probe-echo correlations
 echo_a <- round(echo_content(activs_a, sm), 3)
-cor_a <- cor(proto_a, echo_a)
+cor_a <- cor(proto_a[(num_name + 1):num_trace], echo_a[(num_name + 1):num_trace])
 int_a <- sum(activs_a)
 echo_b <- round(echo_content(activs_b, sm), 3)
-cor_b <- cor(proto_b, echo_b)
+cor_b <- cor(proto_b[(num_name + 1):num_trace], echo_b[(num_name + 1):num_trace])
 int_b <- sum(activs_b)
 echo_c <- round(echo_content(activs_c, sm), 3)
-cor_c <- cor(proto_c, echo_c)
+cor_c <- cor(proto_c[(num_name + 1):num_trace], echo_c[(num_name + 1):num_trace])
 int_c <- sum(activs_c)
 
-df <- data.frame(corr = c(cor_a, cor_b, cor_c), intensity = c(int_a, int_b, int_c))
-rownames(df) <- c("catA", "catB", "catC")
-return(df)
+output_mat <- rbind(proto_a, echo_a, proto_b, echo_b, proto_c, echo_c)
+return(output_mat)
 }
 ```
 
-I had to rework the code so that the prototypes were actually the basis for the distorted exemplars. The code seems to work and generate the intended outcomes, but I'll need to verify it with Matt.
+I edited the correlation code to reflect only the correlation for the 13 stimulus features (excluding the 10 name features; clearly, I misunderstood Hintzman the first time). Also, I changed the output to a matrix with the probes and echoes for the 3 categories. However, why do the echoes have values greater than 1 and less than -1? That's not what Hintzman got.
 
-I'll also need to ask if there is a way to return multiple outputs from this function i.e. for each of the 3 categories, I'll need the prototype, the echo, the prototype-echo correlation, and the echo intensity. Perhaps returning a list would work?
+```{r}
+replicate(20, abstraction(3,6,9,4))
+```
 
-The next step is to produce graphs like the ones in Hintzman (1986) comparing prototypes to echos.
+Using the replicate function allows me to simulate multiple participants easily.
 
-![](images/Screenshot%202023-02-01%20at%2010.24.41%20AM.png)
+Next, I need to plot the prototypes against the echoes in a "histogram". After several failed attempts at doing so with ggplot, I finally came to the conclusion that I had to use the basic R plotting package. An example of the code is below.
+
+```{r}
+graph_in <- abstraction(3, 6, 9, 4)
+par = (mfrow = c (1, 2))
+barplot(graph_in[5, ], main = "proto_a")
+barplot(graph_in[6, ], main = "echo_a")
+```
+
+The code works, though it seems to indicate that the name features are a little different in the echo than in the probe. That might make sense, since the probe would not be highly similar to traces from a different category, which could affect the "purity" of the echo.
+
+I haven't figured out a way to write a function to easily churn out the 6 graphs. Functions only return 1 output, and I'm not sure the basic plotting package in R allows for saving a graph containing multiple layers as a variable.
