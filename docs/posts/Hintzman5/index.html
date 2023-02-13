@@ -459,15 +459,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb6-105"><a href="#cb6-105" aria-hidden="true" tabindex="-1"></a>    current_cor <span class="ot">&lt;-</span> <span class="fu">cor</span>(echo_names[e_name, ], category_names[c_name, ])</span>
 <span id="cb6-106"><a href="#cb6-106" aria-hidden="true" tabindex="-1"></a>    cat_echo_name_cor <span class="ot">&lt;-</span> <span class="fu">c</span>(cat_echo_name_cor, current_cor)</span>
 <span id="cb6-107"><a href="#cb6-107" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">max</span>(cat_echo_name_cor) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
-<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a>   current_answer_temp <span class="ot">&lt;-</span> <span class="fu">which</span>(cat_echo_name_cor <span class="sc">==</span> <span class="fu">max</span>(cat_echo_name_cor))</span>
-<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">length</span>(current_answer_temp) <span class="sc">&gt;</span> <span class="dv">1</span>) {</span>
-<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a>    current_answer <span class="ot">&lt;-</span> <span class="fu">sample</span>(current_answer_temp, <span class="dv">1</span>)</span>
-<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a>   current_answer <span class="ot">&lt;-</span> current_answer_temp</span>
-<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a>   }</span>
-<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span> {</span>
-<span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a>    current_answer <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">9999</span></span>
+<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">max</span>(cat_echo_name_cor) <span class="sc">&lt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a>   current_answer <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">9999</span></span>
+<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a>    current_answer_temp <span class="ot">&lt;-</span> <span class="fu">which</span>(cat_echo_name_cor <span class="sc">==</span> <span class="fu">max</span>(cat_echo_name_cor))</span>
+<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(<span class="fu">length</span>(current_answer_temp) <span class="sc">&gt;</span> <span class="dv">1</span>) {</span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a>    current_answer <span class="ot">&lt;-</span> <span class="fu">sample</span>(current_answer_temp, <span class="dv">1</span>)</span>
+<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a>    current_answer <span class="ot">&lt;-</span> current_answer_temp</span>
+<span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a>  category_for_each_echo <span class="ot">&lt;-</span> <span class="fu">c</span>(category_for_each_echo, current_answer)</span>
 <span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a>}</span>
@@ -523,7 +523,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><p>The forgetting affects all features, including name features, right?</p></li>
 <li><p>Does it matter which old exemplar I choose? (I’ve just chosen the first of each category)</p></li>
 </ul>
-<p>There’s something wrong with the code, especially when the number of simulations gets too high (e.g.&nbsp;100). It seems the problem lies with the assign_category_for_each_echo function.</p>
+<p>There’s something wrong with the code, especially when the number of simulations gets too high (e.g.&nbsp;100). It seems the problem lies with the assign_category_for_each_echo function; there could be a function that is occasionally turning up an NA value?</p>
 
 
 </section>

@@ -247,15 +247,15 @@ for(e_name in 1:nrow(echo_names)) {
     current_cor <- cor(echo_names[e_name, ], category_names[c_name, ])
     cat_echo_name_cor <- c(cat_echo_name_cor, current_cor)
   }
-  if(max(cat_echo_name_cor) > 0) {
-   current_answer_temp <- which(cat_echo_name_cor == max(cat_echo_name_cor))
-  if(length(current_answer_temp) > 1) {
+  if(max(cat_echo_name_cor) < 0) {
+   current_answer <- -9999
+  } else {
+    current_answer_temp <- which(cat_echo_name_cor == max(cat_echo_name_cor))
+    if(length(current_answer_temp) > 1) {
     current_answer <- sample(current_answer_temp, 1)
-  }
-   current_answer <- current_answer_temp
-   }
-  else {
-    current_answer <- -9999
+    } else {
+    current_answer <- current_answer_temp
+    }
   }
   category_for_each_echo <- c(category_for_each_echo, current_answer)
 }
@@ -316,4 +316,4 @@ Things I'm unsure about:
 
 -   Does it matter which old exemplar I choose? (I've just chosen the first of each category)
 
-There's something wrong with the code, especially when the number of simulations gets too high (e.g. 100). It seems the problem lies with the assign_category_for_each_echo function.
+There's something wrong with the code, especially when the number of simulations gets too high (e.g. 100). It seems the problem lies with the assign_category_for_each_echo function; there could be a function that is occasionally turning up an NA value?
