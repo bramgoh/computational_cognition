@@ -84,14 +84,6 @@ convert_to_intensity_mat <- function(activations_matrix, max_num_of_copies = 5) 
 ```
 
 ```{r}
-item_mat <- gen_item_matrix()
-sec_mem <- gen_secondary_mem(item_mat)
-probe_mat <- gen_probes(item_mat)
-activ_mat <- calc_activs_for_mult_probes(probe_mat, sec_mem)
-int_mat <- convert_to_intensity_mat(activ_mat)
-```
-
-```{r}
 # Overall simulation function
 
 sim_intensity_once <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5) {
