@@ -1,12 +1,14 @@
 ---
-title: "Hintzman's (1988) MINERVA (Part 1)"
+title: "Hintzman's (1988) MINERVA (Part 2)"
 author: "Bram Goh"
-date: "2023-02-14"
+date: "2023-02-16"
 categories: [code]
-image: "echo_intensity.png"
+image: "frequency_discrim.png"
 ---
 
-# Moving on to Hintzman (1988)
+# Absolute Frequency Judgments
+
+## Code from previous exercise
 
 ```{r}
 library(tidyverse)
@@ -114,3 +116,27 @@ sim_intensity_multiple <- function(n_of_sim, matrix_size = 20, item_size = 20, p
 df_intensity <- sim_intensity_multiple(1000)
 ggplot(df_intensity, aes(x = Intensity, color = factor(Frequency))) + geom_density(show.legend = TRUE) + xlim(-1, 2)
 ```
+
+## Code for absolute frequency judgments
+
+```{r}
+intensity_df <- sim_intensity_multiple(250, matrix_size = 16, l_value = 0.8, max_num_of_copies = 4)
+discrim_intensity_df <- intensity_df %>% mutate(freq_judgement = case_when(
+  Intensity < 0.17 ~ 0,
+  Intensity >= 0.17 & Intensity < 0.67 ~ 1,
+  Intensity >= 0.67 & Intensity < 1.33 ~ 2,
+  Intensity >= 1.33 & Intensity < 2 ~ 3,
+  Intensity >= 2 ~ 4
+))
+
+freq_judgment_df <- data.frame(table(factor(discrim_intensity_df$Frequency, levels = 0:4), factor(discrim_intensity_df$freq_judgement, levels = 0:4))) %>% mutate(Freq = Freq/1000) %>% rename(Real_freq = Var1, Freq_judg = Var2, Proportion_of_resp = Freq)
+
+
+```
+
+```{r}
+ggplot(freq_judgment_df, aes(x = Freq_judg, y = Proportion_of_resp, group = Real_freq, color = Real_freq)) + geom_path() + geom_point()
+
+```
+
+I've reproduced the rough shape of the graph, but the values are lower than in Hintzman's (1988) graph. It is also strange that the proportion of correct responses when frequency = 3 is lower than that for frequency = 4. The general trend of lower peaks as frequency_judgment increases is not reflected in my graph.

@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Bram Goh">
-<meta name="dcterms.date" content="2023-02-14">
+<meta name="dcterms.date" content="2023-02-16">
 
-<title>../../Computational Cognition - Hintzman’s (1988) MINERVA (Part 1)</title>
+<title>../../Computational Cognition - Hintzman’s (1988) MINERVA (Part 2)</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -168,7 +168,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Hintzman’s (1988) MINERVA (Part 1)</h1>
+      <h1 class="title">Hintzman’s (1988) MINERVA (Part 2)</h1>
                                 <div class="quarto-categories">
                 <div class="quarto-category">code</div>
               </div>
@@ -188,7 +188,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">February 14, 2023</p>
+        <p class="date">February 16, 2023</p>
       </div>
     </div>
     
@@ -206,8 +206,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<section id="moving-on-to-hintzman-1988" class="level1">
-<h1>Moving on to Hintzman (1988)</h1>
+<section id="absolute-frequency-judgments" class="level1">
+<h1>Absolute Frequency Judgments</h1>
+<section id="code-from-previous-exercise" class="level2">
+<h2 class="anchored" data-anchor-id="code-from-previous-exercise">Code from previous exercise</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -331,8 +333,31 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><img src="index_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+</section>
+<section id="code-for-absolute-frequency-judgments" class="level2">
+<h2 class="anchored" data-anchor-id="code-for-absolute-frequency-judgments">Code for absolute frequency judgments</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>intensity_df <span class="ot">&lt;-</span> <span class="fu">sim_intensity_multiple</span>(<span class="dv">250</span>, <span class="at">matrix_size =</span> <span class="dv">16</span>, <span class="at">l_value =</span> <span class="fl">0.8</span>, <span class="at">max_num_of_copies =</span> <span class="dv">4</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>discrim_intensity_df <span class="ot">&lt;-</span> intensity_df <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">freq_judgement =</span> <span class="fu">case_when</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  Intensity <span class="sc">&lt;</span> <span class="fl">0.17</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  Intensity <span class="sc">&gt;=</span> <span class="fl">0.17</span> <span class="sc">&amp;</span> Intensity <span class="sc">&lt;</span> <span class="fl">0.67</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  Intensity <span class="sc">&gt;=</span> <span class="fl">0.67</span> <span class="sc">&amp;</span> Intensity <span class="sc">&lt;</span> <span class="fl">1.33</span> <span class="sc">~</span> <span class="dv">2</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  Intensity <span class="sc">&gt;=</span> <span class="fl">1.33</span> <span class="sc">&amp;</span> Intensity <span class="sc">&lt;</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">3</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  Intensity <span class="sc">&gt;=</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">4</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>freq_judgment_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">table</span>(<span class="fu">factor</span>(discrim_intensity_df<span class="sc">$</span>Frequency, <span class="at">levels =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">4</span>), <span class="fu">factor</span>(discrim_intensity_df<span class="sc">$</span>freq_judgement, <span class="at">levels =</span> <span class="dv">0</span><span class="sc">:</span><span class="dv">4</span>))) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">Freq =</span> Freq<span class="sc">/</span><span class="dv">1000</span>) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">Real_freq =</span> Var1, <span class="at">Freq_judg =</span> Var2, <span class="at">Proportion_of_resp =</span> Freq)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(freq_judgment_df, <span class="fu">aes</span>(<span class="at">x =</span> Freq_judg, <span class="at">y =</span> Proportion_of_resp, <span class="at">group =</span> Real_freq, <span class="at">color =</span> Real_freq)) <span class="sc">+</span> <span class="fu">geom_path</span>() <span class="sc">+</span> <span class="fu">geom_point</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>I’ve reproduced the rough shape of the graph, but the values are lower than in Hintzman’s (1988) graph. It is also strange that the proportion of correct responses when frequency = 3 is lower than that for frequency = 4. The general trend of lower peaks as frequency_judgment increases is not reflected in my graph.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
