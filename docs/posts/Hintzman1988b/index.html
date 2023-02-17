@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Bram Goh">
-<meta name="dcterms.date" content="2023-02-16">
+<meta name="dcterms.date" content="2023-02-17">
 
 <title>../../Computational Cognition - Hintzman’s (1988) MINERVA (Part 2)</title>
 <style>
@@ -188,7 +188,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">February 16, 2023</p>
+        <p class="date">February 17, 2023</p>
       </div>
     </div>
     
@@ -206,10 +206,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<section id="absolute-frequency-judgments" class="level1">
-<h1>Absolute Frequency Judgments</h1>
-<section id="code-from-previous-exercise" class="level2">
-<h2 class="anchored" data-anchor-id="code-from-previous-exercise">Code from previous exercise</h2>
+<section id="applying-minerva-2-to-frequency-judgment-tasks" class="level1">
+<h1>Applying MINERVA 2 to frequency judgment tasks</h1>
+<section id="absolute-frequency-judgments" class="level2">
+<h2 class="anchored" data-anchor-id="absolute-frequency-judgments">Absolute Frequency Judgments</h2>
+<section id="code-from-previous-exercise" class="level3">
+<h3 class="anchored" data-anchor-id="code-from-previous-exercise">Code from previous exercise</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -334,8 +336,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </section>
-<section id="code-for-absolute-frequency-judgments" class="level2">
-<h2 class="anchored" data-anchor-id="code-for-absolute-frequency-judgments">Code for absolute frequency judgments</h2>
+<section id="code-for-absolute-frequency-judgments" class="level3">
+<h3 class="anchored" data-anchor-id="code-for-absolute-frequency-judgments">Code for absolute frequency judgments</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>intensity_df <span class="ot">&lt;-</span> <span class="fu">sim_intensity_multiple</span>(<span class="dv">250</span>, <span class="at">matrix_size =</span> <span class="dv">16</span>, <span class="at">l_value =</span> <span class="fl">0.8</span>, <span class="at">max_num_of_copies =</span> <span class="dv">4</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>discrim_intensity_df <span class="ot">&lt;-</span> intensity_df <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">freq_judgement =</span> <span class="fu">case_when</span>(</span>
@@ -354,7 +356,156 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p><img src="index_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>I’ve reproduced the rough shape of the graph, but the values are lower than in Hintzman’s (1988) graph. It is also strange that the proportion of correct responses when frequency = 3 is lower than that for frequency = 4. The general trend of lower peaks as frequency_judgment increases is not reflected in my graph.</p>
+<p>I’ve reproduced the rough shape of the graph, but the values are lower than in Hintzman’s (1988) graph. It is also strange that the proportion of correct responses when frequency = 3 is lower than that for frequency = 4. The general trend of lower peaks as frequency_judgment increases is not reflected in my graph.<br>
+</p>
+</section>
+</section>
+<section id="effects-of-orienting-shallow-vs-deep-levels-of-processing" class="level2">
+<h2 class="anchored" data-anchor-id="effects-of-orienting-shallow-vs-deep-levels-of-processing">Effects of orienting (shallow vs deep levels of processing)</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Initial parameters</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>num_feat_shallow <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>num_feat_deep <span class="ot">&lt;-</span> <span class="dv">15</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>num_of_traces_per_freq <span class="ot">&lt;-</span> <span class="dv">4</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>max_num_of_copies <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Creating the appropriate number of copies for each item</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>gen_item_mat_copies <span class="ot">&lt;-</span> <span class="cf">function</span>(item_matrix) {</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  freq_multiplier <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_num_of_copies) {</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    current_multiplier <span class="ot">&lt;-</span> <span class="fu">rep</span>(i, num_of_traces_per_freq)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    freq_multiplier <span class="ot">&lt;-</span> <span class="fu">c</span>(freq_multiplier, current_multiplier)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  item_mat_copies <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(item_matrix)) {</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    current_rows <span class="ot">&lt;-</span> <span class="fu">matrix</span>(item_matrix[i , ], <span class="at">nrow =</span> freq_multiplier[i], <span class="at">ncol =</span> <span class="fu">ncol</span>(item_matrix), <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    item_mat_copies <span class="ot">&lt;-</span> <span class="fu">rbind</span>(item_mat_copies, current_rows)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a> <span class="fu">return</span>(item_mat_copies)</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Functions for shallow learning filter and deep learning filter</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>gen_shallow_learning_filter <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">l_value1 =</span> <span class="fl">0.6</span>, <span class="at">l_value2 =</span> <span class="dv">0</span>) {</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  matrix_shallow_part_1 <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">size =</span> num_feat_shallow, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> l_value1, l_value1), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  matrix_shallow_part_2 <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">size =</span> num_feat_deep, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> l_value2, l_value2), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>  matrix_shallow <span class="ot">&lt;-</span> <span class="fu">c</span>(matrix_shallow_part_1, matrix_shallow_part_2)</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(matrix_shallow)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>gen_deep_learning_filter <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">l_value1 =</span> <span class="fl">0.6</span>, <span class="at">l_value2 =</span> <span class="dv">0</span>) {</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>  matrix_deep_part_1 <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">size =</span> num_feat_shallow, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> l_value2, l_value2), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>  matrix_deep_part_2 <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">size =</span> num_feat_deep, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> l_value1, l_value1), <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>  matrix_deep <span class="ot">&lt;-</span> <span class="fu">c</span>(matrix_deep_part_1, matrix_deep_part_2)</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(matrix_deep)</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Generating secondary memory - putting item copies matrix through learning filters</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>gen_orienting_secondary_mem <span class="ot">&lt;-</span> <span class="cf">function</span>(item_copies_matrix, <span class="at">l_value1 =</span> <span class="fl">0.6</span>, <span class="at">l_value2 =</span> <span class="dv">0</span>) {</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>orienting_sec_mem <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(item_copies_matrix)) {</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(i <span class="sc">%%</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>    deep_filter <span class="ot">&lt;-</span> <span class="fu">gen_deep_learning_filter</span>(<span class="at">l_value1 =</span> l_value1, <span class="at">l_value2 =</span> l_value2)</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>    orienting_sec_mem <span class="ot">&lt;-</span> <span class="fu">rbind</span>(orienting_sec_mem, item_copies_matrix[i, ] <span class="sc">*</span> deep_filter)</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>  shallow_filter <span class="ot">&lt;-</span> <span class="fu">gen_shallow_learning_filter</span>(<span class="at">l_value1 =</span> l_value1, <span class="at">l_value2 =</span> l_value2)</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>    orienting_sec_mem <span class="ot">&lt;-</span> <span class="fu">rbind</span>(orienting_sec_mem, item_copies_matrix[i, ] <span class="sc">*</span> shallow_filter)</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a><span class="fu">return</span>(orienting_sec_mem)</span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert activations matrix to intensity matrix (slightly different from previous function)</span></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>orient_convert_to_intensity_matrix <span class="ot">&lt;-</span> <span class="cf">function</span>(activations_matrix, <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>  intensity_vector <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(activations_matrix)</span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>  intensity_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(intensity_vector, <span class="at">nrow =</span> max_num_of_copies <span class="sc">+</span> <span class="dv">1</span>, <span class="at">ncol =</span> num_of_traces_per_freq<span class="sc">/</span><span class="dv">2</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(intensity_matrix)</span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Encode traces into secondary memory</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>item_mat <span class="ot">&lt;-</span> <span class="fu">gen_item_matrix</span>(<span class="at">item_size =</span> <span class="dv">25</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>item_copies_mat <span class="ot">&lt;-</span> <span class="fu">gen_item_mat_copies</span>(item_mat)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>or_sec_mem <span class="ot">&lt;-</span> <span class="fu">gen_orienting_secondary_mem</span>(item_copies_mat)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>probe_mat <span class="ot">&lt;-</span> <span class="fu">gen_probes</span>(item_mat)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>activ_mat_raw <span class="ot">&lt;-</span> <span class="fu">calc_activs_for_mult_probes</span>(probe_mat, or_sec_mem)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>activ_mat_shallow <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>activ_mat_deep <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(activ_mat_raw)) {</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(i <span class="sc">%%</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    activ_mat_deep <span class="ot">&lt;-</span> <span class="fu">rbind</span>(activ_mat_deep, activ_mat_raw[i, ])</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    activ_mat_shallow <span class="ot">&lt;-</span> <span class="fu">rbind</span>(activ_mat_shallow, activ_mat_raw[i, ])</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>intensity_shallow <span class="ot">&lt;-</span> <span class="fu">orient_convert_to_intensity_matrix</span>(activ_mat_shallow)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>sim_orienting_once <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">matrix_size =</span> <span class="dv">20</span>, <span class="at">item_size =</span> <span class="dv">25</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="at">l_value1 =</span> <span class="fl">0.6</span>, <span class="at">l_value2 =</span> <span class="dv">0</span>) {</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>  item_matrix <span class="ot">&lt;-</span> <span class="fu">gen_item_matrix</span>(<span class="at">matrix_size =</span> matrix_size, <span class="at">item_size =</span> item_size, <span class="at">prob =</span> prob)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  item_matrix_copies <span class="ot">&lt;-</span> <span class="fu">gen_item_mat_copies</span>(item_matrix)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>  orienting_memory <span class="ot">&lt;-</span> <span class="fu">gen_orienting_secondary_mem</span>(item_matrix_copies, <span class="at">l_value1 =</span> l_value1, <span class="at">l_value2 =</span> l_value2)</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  probe_matrix <span class="ot">&lt;-</span> <span class="fu">gen_probes</span>(item_matrix, <span class="at">prob =</span> prob, <span class="at">max_num_of_copies =</span> max_num_of_copies, <span class="at">num_of_traces_per_freq =</span> num_of_traces_per_freq)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  raw_activations <span class="ot">&lt;-</span> <span class="fu">calc_activs_for_mult_probes</span>(probe_matrix, orienting_memory)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>  shallow_activations <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>  deep_activations <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(raw_activations)) {</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(i <span class="sc">%%</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>    deep_activations <span class="ot">&lt;-</span> <span class="fu">rbind</span>(deep_activations, raw_activations[i, ])</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>    shallow_activations <span class="ot">&lt;-</span> <span class="fu">rbind</span>(shallow_activations, raw_activations[i, ])</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>  intensity_matrix <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">orient_convert_to_intensity_matrix</span>(shallow_activations), <span class="fu">orient_convert_to_intensity_matrix</span>(deep_activations))</span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(intensity_matrix)</span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>sim_orienting_multiple <span class="ot">&lt;-</span> <span class="cf">function</span>(n_of_sim, <span class="at">matrix_size =</span> <span class="dv">20</span>, <span class="at">item_size =</span> <span class="dv">25</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="at">l_value1 =</span> <span class="fl">0.6</span>, <span class="at">l_value2 =</span> <span class="dv">0</span>) {</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>  raw_intensity_matrix <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_of_sim) {</span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>    temp_intensity <span class="ot">&lt;-</span> <span class="fu">sim_orienting_once</span>(<span class="at">matrix_size =</span> matrix_size, <span class="at">item_size =</span> item_size, <span class="at">prob =</span> prob, <span class="at">l_value1 =</span> l_value1, <span class="at">l_value2 =</span> l_value2)</span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>    raw_intensity_matrix <span class="ot">&lt;-</span> <span class="fu">cbind</span>(raw_intensity_matrix, temp_intensity)</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>  level_of_process <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="st">"shallow"</span>, max_num_of_copies <span class="sc">+</span> <span class="dv">1</span>), <span class="fu">rep</span>(<span class="st">"deep"</span>, max_num_of_copies <span class="sc">+</span> <span class="dv">1</span>))</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a> frequency <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span><span class="sc">:</span>max_num_of_copies, <span class="dv">2</span>)</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>  intensity_df <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(level_of_process, frequency, <span class="fu">data.frame</span>(raw_intensity_matrix)) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">level_of_process =</span> ...<span class="dv">1</span>, <span class="at">frequency =</span> ...<span class="dv">2</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"X"</span>), <span class="at">names_to =</span> <span class="st">"Drop"</span>, <span class="at">values_to =</span> <span class="st">"Intensity"</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">!</span>Drop)</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(intensity_df)</span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>orient_intensity <span class="ot">&lt;-</span> <span class="fu">sim_orienting_multiple</span>(<span class="dv">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>New names:
+• `` -&gt; `...1`
+• `` -&gt; `...2`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>summarized_intensity <span class="ot">&lt;-</span> orient_intensity <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(level_of_process, frequency) <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="at">mean_intensity =</span> <span class="fu">mean</span>(Intensity))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'level_of_process'. You can override using
+the `.groups` argument.</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(summarized_intensity, <span class="fu">aes</span>(<span class="at">x =</span> frequency, <span class="at">y =</span> mean_intensity, <span class="at">group =</span> level_of_process, <span class="at">color =</span> level_of_process)) <span class="sc">+</span> <span class="fu">geom_path</span>() <span class="sc">+</span> <span class="fu">geom_point</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>This graph is very different from Hintzman’s. I think I must have fundamentally misunderstood something about how this simulation was carried out.</p>
 
 
 </section>
