@@ -250,59 +250,61 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(item_matrix)</span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Form secondary memory -- create encoded matrix (i.e. apply learning rate) and input varying frequencies of items</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Form probe matrix i.e. item_matrix + 4 more random items</span></span>
 <span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>gen_secondary_mem <span class="ot">&lt;-</span> <span class="cf">function</span>(item_matrix, <span class="at">l_value =</span> .<span class="dv">5</span>, <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  learning_matrix <span class="ot">&lt;-</span> <span class="fu">replicate</span>(<span class="at">n =</span> <span class="fu">ncol</span>(item_matrix), <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">size =</span> <span class="fu">nrow</span>(item_matrix), <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> l_value, l_value), <span class="at">replace =</span> <span class="cn">TRUE</span>))</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  encoded_matrix <span class="ot">&lt;-</span> item_matrix <span class="sc">*</span> learning_matrix</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  freq_multiplier <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_num_of_copies) {</span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    current_multiplier <span class="ot">&lt;-</span> <span class="fu">rep</span>(i, num_of_traces_per_freq)</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    freq_multiplier <span class="ot">&lt;-</span> <span class="fu">c</span>(freq_multiplier, current_multiplier)</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  secondary_memory <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(encoded_matrix)) {</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    current_rows <span class="ot">&lt;-</span> <span class="fu">matrix</span>(encoded_matrix[i , ], <span class="at">nrow =</span> freq_multiplier[i], <span class="at">ncol =</span> <span class="fu">ncol</span>(encoded_matrix), <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    secondary_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(secondary_memory, current_rows)</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a> <span class="fu">return</span>(secondary_memory)</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Form probe matrix i.e. item_matrix + 4 more random items</span></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>gen_probes <span class="ot">&lt;-</span> <span class="cf">function</span>(item_matrix, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>  random_items <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">replicate</span>(<span class="at">n =</span> num_of_traces_per_freq, <span class="fu">generate_item</span>(<span class="at">item_size =</span> <span class="fu">ncol</span>(item_matrix), <span class="at">prob =</span> prob)))</span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>  probe_matrix <span class="ot">&lt;-</span> <span class="fu">rbind</span>(random_items, item_matrix)</span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(probe_matrix)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>gen_probes <span class="ot">&lt;-</span> <span class="cf">function</span>(item_matrix, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  random_items <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">replicate</span>(<span class="at">n =</span> num_of_traces_per_freq, <span class="fu">generate_item</span>(<span class="at">item_size =</span> <span class="fu">ncol</span>(item_matrix), <span class="at">prob =</span> prob)))</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  probe_matrix <span class="ot">&lt;-</span> <span class="fu">rbind</span>(random_items, item_matrix)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(probe_matrix)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Form secondary memory -- create encoded matrix (i.e. apply learning rate) and input varying frequencies of items</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>gen_secondary_mem <span class="ot">&lt;-</span> <span class="cf">function</span>(item_matrix, <span class="at">l_value =</span> .<span class="dv">5</span>, <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  freq_multiplier <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_num_of_copies) {</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    current_multiplier <span class="ot">&lt;-</span> <span class="fu">rep</span>(i, num_of_traces_per_freq)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    freq_multiplier <span class="ot">&lt;-</span> <span class="fu">c</span>(freq_multiplier, current_multiplier)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  secondary_memory <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(freq_multiplier)) {</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    current_rows <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(item_matrix[j, ], freq_multiplier[j]), <span class="at">nrow =</span> freq_multiplier[j], <span class="at">ncol =</span> <span class="fu">ncol</span>(item_matrix), <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    secondary_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(secondary_memory, current_rows)</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>   learning_matrix <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">replicate</span>(<span class="at">n =</span> <span class="fu">nrow</span>(secondary_memory), <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="at">size =</span> <span class="fu">ncol</span>(secondary_memory), <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> l_value, l_value), <span class="at">replace =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>  encoded_memory <span class="ot">&lt;-</span> secondary_memory <span class="sc">*</span> learning_matrix</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a> <span class="fu">return</span>(encoded_memory)</span>
 <span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate activations for multiple probes</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>calc_activs_for_mult_probes <span class="ot">&lt;-</span> <span class="cf">function</span>(probe_matrix, secondary_memory) {</span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>  activations_matrix <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(probe_matrix)) {</span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>    current_activs <span class="ot">&lt;-</span> <span class="fu">get_activations_3</span>(probe_matrix[i, ], secondary_memory)</span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>    activations_matrix <span class="ot">&lt;-</span> <span class="fu">rbind</span>(activations_matrix, current_activs)</span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(activations_matrix)</span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert activations matrix to transformed intensity matrix ready for plotting</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate activations for multiple probes</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>calc_activs_for_mult_probes <span class="ot">&lt;-</span> <span class="cf">function</span>(probe_matrix, secondary_memory) {</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>  activations_matrix <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(probe_matrix)) {</span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>    current_activs <span class="ot">&lt;-</span> <span class="fu">get_activations_3</span>(probe_matrix[i, ], secondary_memory)</span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>    activations_matrix <span class="ot">&lt;-</span> <span class="fu">rbind</span>(activations_matrix, current_activs)</span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(activations_matrix)</span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>convert_to_intensity_mat <span class="ot">&lt;-</span> <span class="cf">function</span>(activations_matrix, <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
-<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>  intensity_vector <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(activations_matrix)</span>
-<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>  intensity_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(intensity_vector, <span class="at">nrow =</span> max_num_of_copies <span class="sc">+</span> <span class="dv">1</span>, <span class="at">ncol =</span> num_of_traces_per_freq, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(intensity_matrix)</span>
-<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert activations matrix to transformed intensity matrix ready for plotting</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>convert_to_intensity_mat <span class="ot">&lt;-</span> <span class="cf">function</span>(activations_matrix, <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>  intensity_vector <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(activations_matrix)</span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>  intensity_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(intensity_vector, <span class="at">nrow =</span> max_num_of_copies <span class="sc">+</span> <span class="dv">1</span>, <span class="at">ncol =</span> num_of_traces_per_freq, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(intensity_matrix)</span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Overall simulation function</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>sim_intensity_once <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">matrix_size =</span> <span class="dv">20</span>, <span class="at">item_size =</span> <span class="dv">20</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>, <span class="dv">1</span><span class="sc">/</span><span class="dv">3</span>), <span class="at">l_value =</span> .<span class="dv">5</span>, <span class="at">max_num_of_copies =</span> <span class="dv">5</span>, <span class="at">num_of_traces_per_freq =</span> <span class="dv">4</span>) {</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  item_matrix <span class="ot">&lt;-</span> <span class="fu">gen_item_matrix</span>(<span class="at">matrix_size =</span> matrix_size, <span class="at">item_size =</span> item_size, <span class="at">prob =</span> prob)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  secondary_memory <span class="ot">&lt;-</span> <span class="fu">gen_secondary_mem</span>(item_matrix, <span class="at">l_value =</span> l_value, <span class="at">max_num_of_copies =</span> max_num_of_copies, <span class="at">num_of_traces_per_freq =</span> num_of_traces_per_freq)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  probe_matrix <span class="ot">&lt;-</span> <span class="fu">gen_probes</span>(item_matrix, <span class="at">prob =</span> prob, <span class="at">max_num_of_copies =</span> max_num_of_copies, <span class="at">num_of_traces_per_freq =</span> num_of_traces_per_freq)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  probe_matrix <span class="ot">&lt;-</span> <span class="fu">gen_probes</span>(item_matrix, <span class="at">prob =</span> prob, <span class="at">max_num_of_copies =</span> max_num_of_copies, <span class="at">num_of_traces_per_freq =</span> num_of_traces_per_freq)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  secondary_memory <span class="ot">&lt;-</span> <span class="fu">gen_secondary_mem</span>(item_matrix, <span class="at">l_value =</span> l_value, <span class="at">max_num_of_copies =</span> max_num_of_copies, <span class="at">num_of_traces_per_freq =</span> num_of_traces_per_freq)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  activations_matrix <span class="ot">&lt;-</span> <span class="fu">calc_activs_for_mult_probes</span>(probe_matrix, secondary_memory)</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  intensity_matrix <span class="ot">&lt;-</span> <span class="fu">convert_to_intensity_mat</span>(activations_matrix, <span class="at">max_num_of_copies =</span> max_num_of_copies, <span class="at">num_of_traces_per_freq =</span> num_of_traces_per_freq)</span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(intensity_matrix)</span>
@@ -325,12 +327,15 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_intensity <span class="ot">&lt;-</span> <span class="fu">sim_intensity_multiple</span>(<span class="dv">1000</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_intensity, <span class="fu">aes</span>(<span class="at">x =</span> Intensity, <span class="at">color =</span> <span class="fu">factor</span>(Frequency))) <span class="sc">+</span> <span class="fu">geom_density</span>(<span class="at">show.legend =</span> <span class="cn">TRUE</span>) <span class="sc">+</span> <span class="fu">xlim</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 255 rows containing non-finite values (stat_density).</code></pre>
+<pre><code>Warning: Removed 4 rows containing non-finite values (stat_density).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+<p>Finally, I managed to reproduce the graph. I had gotten the general shape earlier (see below) but the mean values were too small and the graphs weren’t spread out enough. It turns out that I was misunderstanding the L value. The L value affects <strong>sampling rate</strong> (i.e.&nbsp;how many features are selected to be copied versus nullified), not <strong>trace quality</strong> (i.e.&nbsp;the actual number of features in memory that are different from others). Thus, I had assumed that all copies of the same original item in secondary memory would i) have the same same number of features learnt, ii) have the exact same features. I was wrong on both counts.</p>
+<p>I fixed this by creating the copies first <strong>before</strong> applying the learning rate, instead of the other way around. This way, the learning rate applies noise, so even among copies of the same item, there is variation in the number of features changes. This is due to the fact that, for some traces, feature values that were originally 0 may be selected to be nullified (resulting in essentially no change), whereas for other traces, feature values that were originally 1 or -1 may be selected to be nullified (resulting in a meaningful change).</p>
+<p><img src="echo_intensity.png" class="img-fluid" width="426"></p>
 
 
 </section>

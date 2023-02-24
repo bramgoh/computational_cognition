@@ -285,4 +285,4 @@ summarized_intensity <- orient_intensity %>% group_by(level_of_process, frequenc
 ggplot(summarized_intensity, aes(x = frequency, y = mean_intensity, group = level_of_process, color = level_of_process)) + geom_path() + geom_point()
 ```
 
-This graph is very different from Hintzman's. I think I must have fundamentally misunderstood something about how this simulation was carried out.
+This graph is very different from Hintzman's. I think I may have made the same mistake as last time with applying the learning rate before making copies, resulting in identically learnt traces.

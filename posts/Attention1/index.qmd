@@ -1,0 +1,188 @@
+---
+title: "A MINERVA model for attention"
+author: "Bram Goh"
+date: "2023-02-24"
+categories: [code]
+image: "Stroop1.png"
+---
+
+# Applying MINERVA to the Stroop task
+
+```{r}
+set.seed(30)
+library(tidyverse)
+library(gtools)
+library(bench)
+
+colors <- c("red", "yellow", "green", "blue")
+
+num_of_feat <- 10
+num_of_congruent_trials <- 48
+num_of_incongruent_trials <- 48
+attention_dampeners <- c(.5, .6, .7, .8, .9, 1)
+con_trials_per_color <- num_of_congruent_trials/length(colors)
+congruent_answer_column <- c()
+for(i in 1:length(colors)){
+  current_correct_answer <- rep(colors[i], con_trials_per_color)
+  congruent_answer_column <- c(congruent_answer_column, current_correct_answer)
+}
+
+incon_permuts <- permutations(length(colors), 2)
+num_of_repeat_incon_trials <- num_of_incongruent_trials/nrow(incon_permuts)
+incongruent_answer_column <- c()
+for(i in 1:nrow(incon_permuts)){
+  current_correct_answer <- rep(colors[incon_permuts[i, 1]], num_of_repeat_incon_trials)
+  incongruent_answer_column <- c(incongruent_answer_column, current_correct_answer)
+}
+
+full_correct_answer_column <- c(congruent_answer_column, incongruent_answer_column)
+
+gen_color <- function() {
+  color <- sample(c(1, 0, -1), num_of_feat, replace = TRUE, prob = c(1/3, 1/3, 1/3))
+  return(color)
+}
+
+patterns <- c()
+for(i in 1:length(colors)) {
+  temp_pattern <- gen_color()
+  patterns <- rbind(patterns, temp_pattern)
+}
+
+row.names(patterns) <- colors
+blank <- numeric(length = num_of_feat)
+
+memory <- c()
+for(i in 1:nrow(patterns)) {
+  ink_set <- c(patterns[i, ], blank, patterns[i, ], blank)
+  word_set <- c(blank, patterns[i, ], blank, patterns[i, ])
+  congruent_set <- c(patterns[i, ], patterns[i, ], patterns[i, ], patterns[i, ])
+  memory <- rbind(memory, ink_set, word_set, congruent_set)
+}
+full_memory <- rbind(memory, memory, memory, memory, memory)
+
+
+congruent_probes <- c()
+for(i in 1:nrow(patterns)){
+  current_trials <- c(patterns[i, ], patterns[i, ], blank, blank)
+  current_combi <- matrix(current_trials, nrow = con_trials_per_color, ncol = length(current_trials), byrow=TRUE)
+  congruent_probes <- rbind(congruent_probes, current_combi)
+}
+
+
+incongruent_probes <- c()
+for(i in 1:nrow(incon_permuts)){
+  current_trials <- c(patterns[incon_permuts[i, 1], ], patterns[incon_permuts[i, 2], ], blank, blank)
+  current_combi <- matrix(current_trials, nrow = num_of_repeat_incon_trials, ncol = length(current_trials), byrow = TRUE)
+  incongruent_probes <- rbind(incongruent_probes, current_combi)
+}
+
+full_probes <- rbind(congruent_probes, incongruent_probes)
+
+# Activation function for single probe (borrowed from Matt)
+get_activations_3 <- function(probe, mem) {
+  
+  as.numeric(((probe %*% t(mem)) / rowSums(t((probe == 0) * t(mem == 0)) == 0))^3)
+}
+
+# Function for calculating echo content for single probe (modified from previous exercise)
+calc_echo_content_for_each_probe <- function(activations_vector, memory_matrix) {
+    echo_content_for_each_probe <- c()
+    for(feat in 1:ncol(memory_matrix)){
+      content_temp <- 0
+        for(memory in 1:nrow(memory_matrix)) {
+          current_product <- activations_vector[memory] * memory_matrix[memory, feat]
+          content_temp <- content_temp + current_product
+        }
+      echo_content_for_each_probe <- c(echo_content_for_each_probe, content_temp)
+  }
+  return(echo_content_for_each_probe)
+}
+
+# Function for generating dampened content
+
+dampen_distractor <- function(probe_content){
+  non_zero <- FALSE
+  while(non_zero == FALSE){
+  dampen_value <- sample(attention_dampeners, 1)
+  attention_dampening_filter <- c(rep(1, num_of_feat*3), sample(c(0, 1), num_of_feat, replace = TRUE, prob = c(1 - dampen_value, dampen_value)))
+   dampened_content <- probe_content * attention_dampening_filter
+   if(sum(abs(dampened_content[(num_of_feat*3+1):(num_of_feat*4)])) != 0){
+     non_zero <- TRUE
+   }
+  }
+     dampened_output <- c(dampened_content, dampen_value)
+   return(dampened_output)
+}
+
+# Function for one Stroop trial (dampening mechanism)
+stroop_one_trial_dampen <- function(probe_vector, memory_matrix, color_patterns){
+ # Attention dampening filter dampens attention to words (in favor of ink color)
+  success <- FALSE
+  start_time <- Sys.time()
+  while(success == FALSE) {
+  probe_activation <- get_activations_3(probe_vector, memory_matrix)
+   probe_content <- calc_echo_content_for_each_probe(probe_activation, memory_matrix)
+   dampened_output <- dampen_distractor(probe_content)
+   dampened_content <- dampened_output[1:(num_of_feat*4)]
+   dampen_value <- dampened_output[num_of_feat*4 + 1]
+   trial_ink_corrs <- c()
+   trial_word_corrs <- c()
+   for(j in 1:nrow(color_patterns)){
+    ink_corr <- cor(color_patterns[j, ], dampened_content[(num_of_feat*2 + 1) : (num_of_feat*3)])
+    if(is.na(ink_corr)){
+      ink_corr <- 0
+    }
+    word_corr <- cor(color_patterns[j, ], dampened_content[(num_of_feat*3 + 1) : (num_of_feat*4)])
+    if(is.na(word_corr)){
+      word_corr <- 0
+    }
+    trial_ink_corrs <- c(trial_ink_corrs, ink_corr)
+    trial_word_corrs <- c(trial_word_corrs, word_corr)
+ }
+   if(max(trial_ink_corrs) >= max(trial_word_corrs)){
+     response <- color_patterns[which.max(trial_ink_corrs), ]
+   } else {
+     response <- color_patterns[which.max(trial_word_corrs), ]
+   }
+   accuracy <- all(response == probe_vector[1:num_of_feat])
+   success <- accuracy == TRUE
+  }
+  end_time <- Sys.time()
+  if(all(probe_vector[1:num_of_feat] == probe_vector[(num_of_feat+1):(num_of_feat*2)])){
+    condition <- "congruent"
+  } else {
+    condition <- "incongruent"
+  }
+  trial_outcome <- data.frame(condition = condition, dampener = dampen_value, time_elapsed = end_time - start_time, accuracy = accuracy)
+   return(trial_outcome)
+}
+
+# Function for full Stroop task simulation (dampening mechanism)
+full_stroop_sim_dampen <- function(probe_matrix, memory_matrix, color_patterns) {
+  all_outcomes <- c()
+  for(i in 1:nrow(probe_matrix)){
+    trial_outcome <- stroop_one_trial_dampen(probe_matrix[i, ], memory_matrix, color_patterns)
+    all_outcomes <- bind_rows(all_outcomes, trial_outcome)
+  }
+  all_outcomes <- all_outcomes %>% mutate(correct_answer = full_correct_answer_column)
+  return(all_outcomes)
+}
+
+```
+
+```{r}
+stroop_results <- data.frame()
+
+for(i in 1:100){
+  current_participant <- full_stroop_sim_dampen(full_probes, full_memory, patterns)
+  stroop_results <- bind_rows(stroop_results, current_participant)
+}
+
+```
+
+```{r}
+stroop_means <- stroop_results %>% group_by(condition, dampener) %>% summarize(mean_dur = mean(time_elapsed))
+ggplot(stroop_means, aes(x = dampener, y = mean_dur, color = condition)) + geom_line()
+```
+
+The trend for the congruent condition makes sense, since the amount of dampening of the distractor should not influence performance, since the target and distractor do not compete for the response. However, for the incongruent condition, it doesn't really make sense that the more the distractors is dampened, the longer it takes to give the correct response. In fact, that's the opposite of what we would expect.
