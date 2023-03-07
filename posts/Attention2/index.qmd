@@ -1,7 +1,7 @@
 ---
 title: "A MINERVA model for attention (Part 2)"
 author: "Bram Goh"
-date: "2023-02-28"
+date: "2023-03-07"
 categories: [code]
 image: "Stroop_equal.png"
 ---
@@ -135,7 +135,7 @@ for(i in 1:dim(trial_matrix)[1]){
   probe <- c(trial_matrix[i,1:40],rep(0,20))
   model_output <- get_echo(probe, memory, tau=3, output = "both")
   similarities <- get_cosine_sim(model_output$echo[41:60], response)
-  memory <- rbind(memory,trial_matrix[i,])
+  memory <- rbind(memory,trial_matrix[i,]) # So the correct answer for that trial is saved in memory, even if the answer was wrong?
   
   trial_data <- data.frame(red = similarities['red', ],
                            green = similarities['green', ],
@@ -153,7 +153,7 @@ row.names(subject_results) <- 1:dim(subject_results)[1]
 
 ## analyze data 
 
-one_sub <- cbind(stroop_trials,subject_results)
+one_sub <- cbind(stroop,subject_results)
 
 one_sub <- one_sub %>%
   mutate(correct = response == max_sim)
@@ -173,7 +173,7 @@ return(all_sub_results)
 # Equal number of congruent and incongruent trials
 
 equal_sim <- sim_multiple_stroop(training_trials, stroop_trials, 100)
-ggplot(equal_sim, aes(x = congruency, y = mean_max)) + geom_boxplot()
+ggplot(equal_sim, aes(x = congruency, y = mean_correct)) + geom_boxplot()
 
 # 75% congruent and 25% incongruent trials
 
@@ -183,7 +183,7 @@ stroop_75_25 <- congruent_items %>%
   slice(sample(1:n()))
 
 more_congruent_sim <- sim_multiple_stroop(training_trials, stroop_75_25, 100)
-ggplot(more_congruent_sim, aes(x = congruency, y = mean_max)) + geom_boxplot()
+ggplot(more_congruent_sim, aes(x = congruency, y = mean_correct)) + geom_boxplot()
 
 # 25% congruent and 75% incongruent trials
 
@@ -194,7 +194,7 @@ stroop_25_75 <- congruent_items %>%
   slice(sample(1:n()))
 
 more_incongruent_sim <- sim_multiple_stroop(training_trials, stroop_25_75, 100)
-ggplot(more_incongruent_sim, aes(x = congruency, y = mean_max)) + geom_boxplot()
+ggplot(more_incongruent_sim, aes(x = congruency, y = mean_correct)) + geom_boxplot()
 ```
 
-Why is the Stroop effect stronger when there is an equal proportion of congruent and incongruent trials than when there are more congruent than incongruent trials?
+Fixed an error and finally got the expected results.
