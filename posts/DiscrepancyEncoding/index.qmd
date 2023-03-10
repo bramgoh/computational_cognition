@@ -1,7 +1,7 @@
 ---
 title: "Discrepancy Encoding in MINERVA (Part 1)"
 author: "Bram Goh"
-date: "2023-03-08"
+date: "2023-03-10"
 categories: [code]
 image: ""
 ---
@@ -107,7 +107,7 @@ sim_intensity_multiple <- function(n_of_sim, matrix_size = 20, item_size = 20, p
 ```
 
 ```{r}
-raw_df_no_de <- sim_intensity_multiple(100)
+raw_df_no_de <- sim_intensity_multiple(1000)
 
 by_probe_no_de <- data.frame(probe_no = 1:60, intensity = rowMeans(raw_df_no_de))
 ggplot(by_probe_no_de, aes(x = probe_no, y = intensity)) + geom_line() + coord_cartesian(ylim = c(-0.01, 0.075)) + scale_x_continuous(breaks = seq(1, 60, 2)) + geom_vline(xintercept = c(5, 13, 25, 41), color = "red")
@@ -115,6 +115,8 @@ ggplot(by_probe_no_de, aes(x = probe_no, y = intensity)) + geom_line() + coord_c
 by_freq_no_de <- data.frame(frequency = rep(c(1,2,3,4,5), each = 4), raw_df_no_de) %>% group_by(frequency) %>% summarize_all(mean) %>% pivot_longer(!frequency, names_to = "Drop", values_to = "Intensity") %>% select(-Drop)
 ggplot(by_freq_no_de, aes(x = Intensity, color = factor(frequency))) + geom_density(show.legend = TRUE) + coord_cartesian(xlim = c(-0.01, 0.05))
 ```
+
+This looks like what we would expect: the intensities are higher when the presented probe has been seen before, and the more times it's been presented before, the higher the intensity. Looking at the frequency distributions, we see a similar overall shape to that found in Hintzman (1988), with the amplitudes decreasing and the variance increasing with higher frequency. The details are different, probably because the setup here is different from Hintzman (1988): we start off here with a 'blank slate' of random vectors in memory before adding each probe to populate memory.
 
 ```{r}
 
@@ -129,6 +131,7 @@ memory <- t(replicate(n = 60, generate_item(item_size = 20, prob = c(1/3, 1/3, 1
 
 # Caluclating intensities and storing each probe
 intensity_vector <- numeric(length = nrow(probe_matrix))
+probe_discrep_cor <- numeric(length = nrow(probe_matrix))
   for(i in 1:nrow(probe_matrix)){
     current_echo <- get_echo(probe_matrix[i, ], memory, output = "both")
     intensity_vector[i] <- current_echo[[1]]
@@ -137,27 +140,86 @@ intensity_vector <- numeric(length = nrow(probe_matrix))
     discrep <- probe_matrix[i, ] - current_content
     learned_trace <- discrep * learning_filter
     memory[i, ] <- learned_trace
+    current_cor <- cor(probe_matrix[i, ], discrep)
+    probe_discrep_cor[i] <- current_cor
+  }
+intensity_df <- data.frame(intensity_value = intensity_vector)
+discrep_df = data.frame(discrep_cor = probe_discrep_cor)
+output_final <- list(intensity = intensity_df, discrep_cor = discrep_df, memory = memory)
+return(output_final)
+}
+
+sim_intensity_multiple_de <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+  full_intensity_df <- data.frame(matrix(0, nrow = sum((1:max_num_of_copies)*4), ncol = n_of_sim))
+  full_discrep_cor_df <- data.frame(matrix(0, nrow = sum((1:max_num_of_copies)*4), ncol = n_of_sim))
+  for(i in 1:n_of_sim) {
+    output_list <- sim_intensity_once_de(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value = l_value, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
+    full_intensity_df[ , i] <- output_list[[1]]
+    full_discrep_cor_df[ , i] <- output_list[[2]]
+  }
+  full_df_list <- list(intensity = full_intensity_df, dicrep_cor = full_discrep_cor_df)
+  return(full_df_list)
+}
+```
+
+```{r}
+raw_dfs_with_de <- sim_intensity_multiple_de(1000)
+intensity_with_de <- raw_dfs_with_de[[1]]
+discrep_cor_with_de <- raw_dfs_with_de[[2]]
+by_probe_with_de <- data.frame(probe_no = 1:60, intensity = rowMeans(intensity_with_de), discrep_cor = rowMeans(discrep_cor_with_de))
+ggplot(by_probe_with_de, aes(x = probe_no, y = intensity)) + geom_line() + scale_x_continuous(breaks = seq(1, 60, 2)) + geom_vline(xintercept = c(5, 13, 25, 41), color = "red")
+ggplot(by_probe_with_de, aes(x = probe_no, y = discrep_cor)) + geom_line() + scale_x_continuous(breaks = seq(1, 60, 2)) + geom_vline(xintercept = c(5, 13, 25, 41), color = "red")
+
+by_freq_with_de <- data.frame(frequency = rep(c(1,2,3,4,5), each = 4), intensity_with_de) %>% group_by(frequency) %>% summarize_all(mean) %>% pivot_longer(!frequency, names_to = "Drop", values_to = "Intensity") %>% select(-Drop)
+ggplot(by_freq_with_de, aes(x = Intensity, color = factor(frequency))) + geom_density(show.legend = TRUE)
+```
+
+This result doesn't make sense. It could be that the discrepancy encoding in MINERVA-AL applies only to associative learning, where two or more events are paired and you can elicit expectations for an event through "partial return", as Semon would have put it, by presenting one of the paired events. In the frequency judgment task, however, the probe presented is not paired with anything, and so there is no expectation to be had. Each probe is a "full pattern" with no 0s to show that a "missing event" is anticipated.
+
+```{r}
+# Overall simulation function (using Collins et al. 2020's encoding function)
+
+sim_intensity_collins <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value_max = 1.0, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+  item_matrix <- gen_item_matrix(matrix_size = matrix_size, item_size = item_size, prob = prob)
+  probe_matrix <- gen_probes(item_matrix, prob = prob, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
+
+  # Starting state secondary memory
+memory <- t(replicate(n = 60, generate_item(item_size = 20, prob = c(1/3, 1/3, 1/3))))
+
+# Caluclating intensities and storing each probe
+intensity_vector <- numeric(length = nrow(probe_matrix))
+  for(i in 1:nrow(probe_matrix)){
+    current_echo <- get_echo(probe_matrix[i, ], memory, output = "both")
+    intensity_vector[i] <- current_echo[[1]]
+    l_value <- l_value_max * (1 - 1/(1 + exp(1)^(-12 * current_echo[[1]] + 2)))
+    learning_filter <- sample(c(0, 1), item_size, replace = TRUE, prob = c(1-l_value, l_value))
+    learned_trace <- probe_matrix[i, ] * learning_filter
+    memory[i, ] <- learned_trace
   }
 intensity_df <- data.frame(intensity_value = intensity_vector)
 return(intensity_df)
 }
 
-sim_intensity_multiple_de <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_multiple_collins <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value_max = 1.0, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
   full_intensity_df <- data.frame(matrix(0, nrow = sum((1:max_num_of_copies)*4), ncol = n_of_sim))
   for(i in 1:n_of_sim) {
-    intensity_column <- sim_intensity_once_de(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value = l_value, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
-    full_intensity_df[ , i] <- intensity_column
+    current_int <- sim_intensity_collins(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value_max = l_value_max, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
+    full_intensity_df[ , i] <- current_int
   }
   return(full_intensity_df)
 }
 ```
 
 ```{r}
-raw_df_with_de <- sim_intensity_multiple_de(100)
+raw_df_collins <- sim_intensity_multiple_collins(1000)
 
-by_probe_with_de <- data.frame(probe_no = 1:60, intensity = rowMeans(raw_df_with_de))
-ggplot(by_probe_with_de, aes(x = probe_no, y = intensity)) + geom_line() + scale_x_continuous(breaks = seq(1, 60, 2)) + geom_vline(xintercept = c(5, 13, 25, 41), color = "red")
+by_probe_collins <- data.frame(probe_no = 1:60, intensity = rowMeans(raw_df_collins))
+ggplot(by_probe_collins, aes(x = probe_no, y = intensity)) + geom_line() + scale_x_continuous(breaks = seq(1, 60, 2)) + geom_vline(xintercept = c(5, 13, 25, 41), color = "red")
 
-by_freq_with_de <- data.frame(frequency = rep(c(1,2,3,4,5), each = 4), raw_df_with_de) %>% group_by(frequency) %>% summarize_all(mean) %>% pivot_longer(!frequency, names_to = "Drop", values_to = "Intensity") %>% select(-Drop)
-ggplot(by_freq_with_de, aes(x = Intensity, color = factor(frequency))) + geom_density(show.legend = TRUE) + coord_cartesian(xlim = c(-0.0025, 0.0025))
+by_freq_collins <- data.frame(frequency = rep(c(1,2,3,4,5), each = 4), raw_df_collins) %>% group_by(frequency) %>% summarize_all(mean) %>% pivot_longer(!frequency, names_to = "Drop", values_to = "Intensity") %>% select(-Drop)
+ggplot(by_freq_collins, aes(x = Intensity, color = factor(frequency))) + geom_density(show.legend = TRUE)
 ```
+
+The encoding function in Collins et al. (2020) makes more sense, even more sense than the no-DE simulations! The initial spike from frequency = 0 to frequency = 1 makes sense, and then subsequent increases in intensity become more and more muted as frequency increases i.e. the increase from frequency = 1 to frequency = 2 is smaller, and so on. At some point, uf we were to simulate frequencies higher than 5, we might arrive at a plateau, where the presentation of a high frequency probe does not lead to a noticeable increase in the intensity of the echo. Since familiarity (i.e. echo intensity) is inversely proportional to L, the rate at which a well-learned probe is encoded to memory diminishes with frequency, just as Matt predicted.
+
+So where does this leave discrepancy encoding as laid out in MINVERVA-AL (Jamieson et al., 2012)? As laid out in Collins et al., the retrieval process occurs both at the encoding stage and at the retrieval stage. Maybe the MINERVA-AL discrepancy encoding function happens at the retrieval stage AFTER the Collins et al encoding function? This way, you get the best of both worlds: a copy of the actual item (with varying fidelity depending on L) that occurs at the encoding stage AND a record of expectancy information that occurs at the retrieval stage.
