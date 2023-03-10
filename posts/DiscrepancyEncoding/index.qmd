@@ -3,7 +3,7 @@ title: "Discrepancy Encoding in MINERVA (Part 1)"
 author: "Bram Goh"
 date: "2023-03-10"
 categories: [code]
-image: ""
+image: "intensity_no_de.png"
 ---
 
 # Applying discrepancy encoding to frequency judgments
