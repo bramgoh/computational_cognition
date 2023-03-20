@@ -1,0 +1,231 @@
+---
+title: "ITS (part 1)"
+author: "Bram Goh"
+date: "2023-03-20"
+categories: [code]
+image: ""
+---
+
+# Getting familiar with ITS
+
+I couldn't get the LSAfun package to work (something to do with rgl). Here is my own crude attempt at modeling ITS:
+
+```{r}
+library(RsemanticLibrarian)
+library(tidyverse)
+library(tm)
+library(tidytext)
+library(tokenizers)
+library(data.table)
+```
+
+```{r}
+# Activation function (borrowed from Matt) for a single probe (i.e. a probe vector)
+
+get_activations <- function(probe, mem, type) {
+  if(type == "hintzman"){
+    return(as.numeric(((probe %*% t(mem)) / rowSums(t((probe == 0) * t(mem == 0)) == 0))))
+  }
+  if(type == "cosine"){
+    temp_activ <- as.numeric(RsemanticLibrarian::cosine_x_to_m(probe,mem))
+    temp_activ[is.nan(temp_activ) == TRUE] <- 0
+    return(temp_activ)
+  }
+}
+
+# Generate echo (borrowed from Matt)
+get_echo <- function(probe, mem, tau=3, output='intensity', type) {
+    activations <- get_activations(probe, mem, type)
+    if(output == "intensity"){
+      return(sum(activations^tau))
+    }
+    if(output == "echo"){
+      weighted_memory <- mem * (activations^tau)  
+      summed_echo <- colSums(weighted_memory)
+      return(summed_echo)
+    }
+    if(output == "both"){
+      weighted_memory <- mem * (activations^tau)  
+      summed_echo <- colSums(weighted_memory)
+      model_output <- list(intensity = sum(activations^tau),
+                           echo = summed_echo)
+      return(model_output)
+    }
+    
+}
+
+# Function to replace words with their dictionary ids
+replace_word_with_id <- function(sentence_df, dict_df, max_sent_length){
+  sentence_id_matrix <- c()
+  for(i in 1:length(sentence_df$sentence)){
+    current_sent <- rep(0, max_sent_length)
+    words_list <- tokenize_words(sentence_df$sentence[i])
+    words <- words_list[[1]]
+    for(j in 1:length(words)){
+      current_id <- which(dict_df$word == words[j])
+      if(length(current_id) == 0){
+        current_id <- 0
+      }
+      current_sent[j] <- current_id
+    }
+    sentence_id_matrix <- rbind(sentence_id_matrix, current_sent)
+  }
+  return(sentence_id_matrix)
+}
+
+# Function to generate random environment vectors for each word in dictionary
+make_env_vectors <- function(dict_df, length, sparsity) {
+  environment_matrix <- matrix(0, nrow = nrow(dict_df), ncol = length)
+  for(i in 1:nrow(dict_df)){
+    current <- rep(0, length)
+    positions <- sample(1:length, sparsity)
+    for(j in 1:length(positions)){
+      current[positions[j]] <- sample(c(1, -1), 1)
+    }
+    environment_matrix[i, ] <- current
+  }
+  return(environment_matrix)
+}
+
+# Function to add up environment vectors for all words in a sentence
+make_sentence_vectors <- function(compiled_word_ids, env_matrix) {
+  sentence_ids <- matrix(0, nrow = nrow(compiled_word_ids), ncol = ncol(env_matrix))
+  for(i in 1:nrow(compiled_word_ids)){
+    current_word_ids <- compiled_word_ids[i, ]
+    current_sentence <- rep(0, ncol(env_matrix))
+    for(j in 1:length(current_word_ids)){
+      if(current_word_ids[j] == 0){
+        temp_vector <- rep(0, ncol(env_matrix))
+      } else {
+      temp_vector <- env_matrix[current_word_ids[j], ]
+      }
+      current_sentence <- current_sentence + temp_vector
+  }
+  sentence_ids[i, ] <- current_sentence
+  }
+  return(sentence_ids)
+}
+
+# Function to generate semantic meaning vectors for each word
+make_meaning_vectors <- function(env_matrix, sentence_memory){
+  meaning_matrix <- matrix(0, nrow = nrow(env_matrix), ncol = ncol(env_matrix))
+  for(i in 1:nrow(env_matrix)){
+    meaning_matrix[i, ] <- get_echo(env_matrix[i, ], sentence_memory, output = "echo", type = "cosine")
+  }
+  return(meaning_matrix)
+}
+```
+
+## Attempt 1: TASA corpus
+
+```{r}
+# Pre-processing
+TASA_full <- read.table("tasaDocsPara.txt", 
+                          sep="\t", 
+                          fill=FALSE, 
+                          strip.white=TRUE)
+training_TASA <- data.frame(sentence = TASA_full$V1[1:2000])
+```
+
+```{r}
+TASA_dict <- training_TASA %>% unnest_tokens(output = "word", input = sentence, token = "words") %>% unique() %>% arrange(word)
+
+TASA_ids <- replace_word_with_id(training_TASA, TASA_dict, 200)
+
+env_vectors_TASA <- make_env_vectors(TASA_dict, 100, 6)
+
+sent_vectors_TASA <- make_sentence_vectors(TASA_ids, env_vectors_TASA)
+
+memory_TASA <- sent_vectors_TASA
+
+meaning_mat_TASA <- make_meaning_vectors(env_vectors_TASA, memory_TASA)
+
+similarities_TASA <- cosine_x_to_m(meaning_mat_TASA[which(TASA_dict$word == "american"), ], meaning_mat_TASA)
+sim_df_TASA <- data.frame(TASA_dict, similarities = similarities_TASA)
+sim_top_TASA <- sim_df_TASA %>% arrange(desc(similarities)) %>% slice(1:10)
+sim_top_TASA
+```
+
+The meaning vectors do not seem to reflect actual semantic meaning. It could be that my makeshift code is flawed. This could also be because the TASA corpus is arranged in paragraphs, rather than sentences.
+
+## Attempt 2: Stanford Natural Language Inference (SNLI) corpus
+
+```{r}
+# Pre-processing with Stanford sentences
+corpus <- read_tsv("snli_1.0_train.txt", col_names = TRUE)
+corpus_short <- corpus[ , 6]
+corpus_sent <- unique(corpus_short)
+corpus_sent_clean <- tolower(corpus_sent$sentence1)
+corpus_sent_clean <- removeWords(corpus_sent_clean, stopwords("en"))
+corpus_sent_clean <- gsub("[[:punct:]]", " ", corpus_sent_clean)
+corpus_sent_clean <- gsub("[[:digit:]]+", " ", corpus_sent_clean)
+corpus_sent_clean <- gsub("\\s+", " ", corpus_sent_clean)
+corpus_sent_clean <- data.frame(sentence = (trimws(corpus_sent_clean)))
+```
+
+```{r}
+partial_corpus <- corpus_sent_clean %>% slice(1:20000)
+
+# Make dictionary
+dictionary <- partial_corpus %>% unnest_tokens(output = "word", input = sentence, token = "words") %>% unique() %>% arrange(word)
+```
+
+```{r}
+corpus_ids <- replace_word_with_id(partial_corpus, dictionary, 50)
+```
+
+```{r}
+env_vectors <- make_env_vectors(dictionary, 100, 6)
+```
+
+```{r}
+sentence_vectors <- make_sentence_vectors(corpus_ids, env_vectors)
+```
+
+```{r}
+memory <- sentence_vectors
+meaning_matrix <- make_meaning_vectors(env_vectors, memory)
+```
+
+```{r}
+similarities <- cosine_x_to_m(meaning_matrix[which(dictionary$word == "boy"), ], meaning_matrix)
+sim_df <- data.frame(dictionary, similarities)
+sim_df_top <- sim_df %>% arrange(desc(similarities)) %>% slice(1:10)
+sim_df_top
+```
+
+The words that are ostensibly semantically similar really aren't at all. Perhaps the sentences in the corpus are unrelated and don't form a coherent narrative. Below is an attempt using The Great Gatsby.
+
+## Attempt 3: The Great Gatsby
+
+```{r}
+library(gutenbergr)
+raw_gatsby <- gutenberg_download(64317)
+gatsby_text <- raw_gatsby %>% slice(31:6396) %>% select(-gutenberg_id)
+gatsby_pasted <- paste(gatsby_text$text, collapse = " ")
+gatsby_sentences <- tokenize_sentences(gatsby_pasted, lowercase = TRUE, simplify = TRUE)
+gatsby_clean <- removeWords(gatsby_sentences, c(stopwords("en"), "ve", "t", "d"))
+gatsby_clean <- gsub("[[:punct:]]", " ", gatsby_clean)
+gatsby_clean <- gsub("[[:digit:]]+", " ", gatsby_clean)
+gatsby_clean <- gsub("\\s+", " ", gatsby_clean)
+gatsby_clean_df <- data.frame(sentence = (trimws(gatsby_clean)))
+```
+
+```{r}
+dictionary_gat <- gatsby_clean_df %>% unnest_tokens(output = "word", input = sentence, token = "words") %>% unique() %>% arrange(word)
+comp_word_ids_gat <- replace_word_with_id(gatsby_clean_df, dictionary_gat, 50)
+env_vectors_gat <- make_env_vectors(dictionary_gat, 100, 6)
+sent_vectors_gat <- make_sentence_vectors(comp_word_ids_gat, env_vectors_gat)
+
+memory_gat <- sent_vectors_gat
+meaning_mat_gat <- make_meaning_vectors(env_vectors_gat, memory_gat)
+```
+
+```{r}
+sim_gat <- cosine_x_to_m(meaning_mat_gat[which(dictionary_gat$word == "party"), ], meaning_mat_gat)
+sim_gat_df <- data.frame(dictionary_gat, similarity = sim_gat)
+sim_gat_top <- sim_gat_df %>% arrange(desc(similarity)) %>% slice(1:10)
+sim_gat_top
+```
+
+Slightly better, but most words are still quite unrelated. Perhaps a longer novel with more sentences would work better?
