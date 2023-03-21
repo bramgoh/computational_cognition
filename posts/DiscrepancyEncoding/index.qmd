@@ -1,7 +1,7 @@
 ---
 title: "Discrepancy Encoding in MINERVA (Part 1)"
 author: "Bram Goh"
-date: "2023-03-10"
+date: "2023-03-21"
 categories: [code]
 image: "intensity_no_de.png"
 ---
@@ -13,6 +13,9 @@ The goal of this exploration is to look into how the discrepancy encoding assump
 ```{r}
 library(tidyverse)
 set.seed(30)
+
+max_frequency <- 5
+num_of_item_per_freq <- 4
 
 # Activation function (borrowed from Matt) for a single probe (i.e. a probe vector)
 
@@ -67,7 +70,7 @@ gen_item_matrix <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3,
 
 # Form probe matrix i.e. item_matrix multiplied by respective frequencies + 4 more random items
 
-gen_probes <- function(item_matrix, prob = c(1/3, 1/3, 1/3), max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+gen_probes <- function(item_matrix, prob = c(1/3, 1/3, 1/3), max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   freq_multiplier <- rep(1:max_num_of_copies, each = num_of_traces_per_freq)
   probe_matrix <- c()
   for(i in 1:length(freq_multiplier)) {
@@ -77,15 +80,25 @@ gen_probes <- function(item_matrix, prob = c(1/3, 1/3, 1/3), max_num_of_copies =
   return(probe_matrix)
 }
 
+# Vector of frequencies for each item
+frequency_vec <- rep(c(1:max_frequency), each = num_of_item_per_freq)
+
+# Rows to extract (with experienced frequency = designated frequency)
+important_rows <- numeric(length = max_frequency*num_of_item_per_freq)
+tracker <- 0
+  for(h in 1:length(frequency_vec)){
+    current_value <- tracker + frequency_vec[h]
+    important_rows[h] <- current_value
+    tracker <- current_value
+  }
 ```
 
 ```{r}
 # Overall simulation function (no discrepancy encoding)
 
-sim_intensity_once <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_once <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   item_matrix <- gen_item_matrix(matrix_size = matrix_size, item_size = item_size, prob = prob)
-  frequency_vec <- rep(c(1,2,3,4,5), each = 4)
-  df_items <- data.frame(subject = NA, item = 1:nrow(item_matrix), frequency = frequency_vec, intensity = NA)
+  df_items <- data.frame(subject = NA, item = 1:nrow(item_matrix), frequency = frequency_vec)
   
   trial_df <- data.frame()
   for(i in 1:nrow(df_items)){
@@ -93,25 +106,26 @@ sim_intensity_once <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1
     trial_df <- rbind(trial_df, current_rows)
   }
   trial_df <- trial_df %>% slice(sample(1:n()))
-
+  
   # Starting state secondary memory
 memory <- rbind(t(replicate(n = 4, generate_item(item_size = 20, prob = c(1/3, 1/3, 1/3)))), matrix(0, nrow = nrow(trial_df), ncol = item_size))
 
 # Caluclating intensities and storing each probe
   for(i in 1:nrow(trial_df)){
     current_intensity <- get_echo(item_matrix[trial_df[i, ]$item, ], memory, output = "intensity", type = "cosine")
-    trial_df[i, ]$intensity <- current_intensity
+    trial_df$intensity[i] <- current_intensity
     learning_filter <- sample(c(0, 1), item_size, replace = TRUE, prob = c(1-l_value, l_value))
     learned_probe <- item_matrix[trial_df[i, ]$item, ] * learning_filter
     memory[4 + i, ] <- learned_probe
   }
-return(trial_df)
+trial_arr_slice <- trial_df %>% arrange(item) %>% slice(important_rows)
+return(trial_arr_slice)
 }
 
-sim_intensity_multiple <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_multiple <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   all_subs_df <- data.frame()
   for(s in 1:n_of_sim) {
-    sub_df <- sim_intensity_once(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value = l_value, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
+    sub_df <- sim_intensity_once(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value = l_value, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq)
     sub_df$subject <- s
     all_subs_df <- rbind(all_subs_df, sub_df)
   }
@@ -126,19 +140,17 @@ subject_sum <- raw_df_no_de %>% group_by(subject, frequency) %>% summarize(mean_
 ggplot(subject_sum, aes(x = mean_int, group = frequency, color = as.factor(frequency))) + geom_density()
 ```
 
-We see a similar overall shape to that found in Hintzman (1988), with the amplitudes decreasing as frequency increases. However, the variance does not increase with increasing frequency. The details are different, probably because the setup here is different from Hintzman (1988): Hintzman had all the traces pre-stored in memory, while here we are adding them to memory one after the other as they are presented.
-
-Also, for this "learning" paradigm where input traces are stored in memory, should we only save and plot the intensity value the final time a probe is presented? For example, if the probe has frequency = 4, frequency will only equal 4 when the probe is presented for the 5th time. The first four times, the frequency will be 0 - 3 respectively.
+We see a similar overall shape to that found in Hintzman (1988), with the amplitudes decreasing and the variance increasing as frequency increases. The actual values are higher than those reported in Hintzman (1988), probably because the setup here is different? Hintzman had all the traces pre-stored in memory, while here we are adding them to memory one after the other as they are presented. I'm not sure why the differences would be this large though.
 
 ```{r}
 
 # Overall simulation function (with discrepancy encoding)
 
-sim_intensity_once_de <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_once_de <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   item_matrix <- gen_item_matrix(matrix_size = matrix_size, item_size = item_size, prob = prob)
-  frequency_vec <- rep(c(1,2,3,4,5), each = 4)
   df_items <- data.frame(subject = NA, item = 1:nrow(item_matrix), frequency = frequency_vec, intensity = NA)
-  
+
+# Setting up trial dataframe with randomized trial order
   trial_df <- data.frame()
   for(i in 1:nrow(df_items)){
     current_rows <- bind_rows(replicate(df_items[i, ]$frequency, df_items[i, ], simplify = FALSE))
@@ -152,20 +164,21 @@ memory <- rbind(t(replicate(n = 4, generate_item(item_size = 20, prob = c(1/3, 1
 # Caluclating intensities and storing each probe
   for(i in 1:nrow(trial_df)){
     current_output <- get_echo(item_matrix[trial_df[i, ]$item, ], memory, output = "both", type = "cosine")
-    trial_df[i, ]$intensity <- current_output[[1]]
+    trial_df$intensity[i] <- current_output[[1]]
     learning_filter <- sample(c(0, 1), item_size, replace = TRUE, prob = c(1-l_value, l_value))
     norm_echo <- current_output[[2]]/max(abs(current_output[[2]]))
     discrep <- item_matrix[trial_df[i, ]$item, ] - norm_echo
     learned_trace <- discrep * learning_filter
     memory[4 + i, ] <- learned_trace
   }
-return(trial_df)
+trial_arr_slice <- trial_df %>% arrange(item) %>% slice(important_rows)
+return(trial_arr_slice)
 }
 
-sim_intensity_multiple_de <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_multiple_de <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_value = .5, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   all_subs_df <- data.frame()
   for(s in 1:n_of_sim) {
-    sub_df <- sim_intensity_once_de(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value = l_value, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
+    sub_df <- sim_intensity_once_de(matrix_size = matrix_size, item_size = item_size, prob = prob, l_value = l_value, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq)
     sub_df$subject <- s
     all_subs_df <- rbind(all_subs_df, sub_df)
   }
@@ -173,22 +186,22 @@ sim_intensity_multiple_de <- function(n_of_sim, matrix_size = 20, item_size = 20
 }
 ```
 
+```         
+```
+
 ```{r}
 raw_dfs_with_de <- sim_intensity_multiple_de(1000)
-
-subject_sum_de <- raw_dfs_with_de %>% group_by(subject, frequency) %>% summarize(mean_int = mean(intensity))
+subject_sum_de <- raw_dfs_with_de %>% group_by(subject, frequency) %>%
+  summarize(mean_int = mean(intensity))
 ggplot(subject_sum_de, aes(x = mean_int, group = frequency, color = as.factor(frequency))) + geom_density()
 ```
 
-These results don't look too different from the no discrepancy encoding graphs, except the curves are squashed toward zero, resulting in lower means and smaller differences between the curves.
+This surprisingly looks more like Hintzman's results, in comparison to the no discrepancy encoding condition. The shape is the same and the values are closer to Hintzman's.
 
 ```{r}
-# Overall simulation function (with Collins et al. 2020 discrepancy encoding)
-
-sim_intensity_once_collins <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_max = 1.0, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_once_collins <- function(matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_max = 1.0, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   item_matrix <- gen_item_matrix(matrix_size = matrix_size, item_size = item_size, prob = prob)
-  frequency_vec <- rep(c(1,2,3,4,5), each = 4)
-  df_items <- data.frame(subject = NA, item = 1:nrow(item_matrix), frequency = frequency_vec, intensity = NA)
+  df_items <- data.frame(subject = NA, item = 1:nrow(item_matrix), frequency = frequency_vec)
   
   trial_df <- data.frame()
   for(i in 1:nrow(df_items)){
@@ -196,26 +209,27 @@ sim_intensity_once_collins <- function(matrix_size = 20, item_size = 20, prob = 
     trial_df <- rbind(trial_df, current_rows)
   }
   trial_df <- trial_df %>% slice(sample(1:n()))
-
+  
   # Starting state secondary memory
 memory <- rbind(t(replicate(n = 4, generate_item(item_size = 20, prob = c(1/3, 1/3, 1/3)))), matrix(0, nrow = nrow(trial_df), ncol = item_size))
 
 # Caluclating intensities and storing each probe
   for(i in 1:nrow(trial_df)){
-    current_output <- get_echo(item_matrix[trial_df[i, ]$item, ], memory, output = "both", type = "cosine")
-    trial_df[i, ]$intensity <- current_output[[1]]
-    l_value <- l_max * (1 - 1/(1 + exp(1)^(-12 * current_output[[1]] + 2)))
+    current_intensity <- get_echo(item_matrix[trial_df[i, ]$item, ], memory, output = "intensity", type = "cosine")
+    trial_df$intensity[i] <- current_intensity
+    l_value <- l_max * (1 - 1/(1 + exp(1)^(-12 * current_intensity + 2)))
     learning_filter <- sample(c(0, 1), item_size, replace = TRUE, prob = c(1-l_value, l_value))
     learned_trace <- item_matrix[trial_df[i, ]$item, ] * learning_filter
     memory[4 + i, ] <- learned_trace
   }
-return(trial_df)
+trial_arr_slice <- trial_df %>% arrange(item) %>% slice(important_rows)
+return(trial_arr_slice)
 }
 
-sim_intensity_multiple_collins <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_max = 1.0, max_num_of_copies = 5, num_of_traces_per_freq = 4) {
+sim_intensity_multiple_collins <- function(n_of_sim, matrix_size = 20, item_size = 20, prob = c(1/3, 1/3, 1/3), l_max = .5, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq) {
   all_subs_df <- data.frame()
   for(s in 1:n_of_sim) {
-    sub_df <- sim_intensity_once_collins(matrix_size = matrix_size, item_size = item_size, prob = prob, l_max = l_max, max_num_of_copies = max_num_of_copies, num_of_traces_per_freq = num_of_traces_per_freq)
+    sub_df <- sim_intensity_once_collins(matrix_size = matrix_size, item_size = item_size, prob = prob, l_max = l_max, max_num_of_copies = max_frequency, num_of_traces_per_freq = num_of_item_per_freq)
     sub_df$subject <- s
     all_subs_df <- rbind(all_subs_df, sub_df)
   }
@@ -230,4 +244,4 @@ subject_sum_collins <- raw_df_collins %>% group_by(subject, frequency) %>% summa
 ggplot(subject_sum_collins, aes(x = mean_int, group = frequency, color = as.factor(frequency))) + geom_density()
 ```
 
-This is interesting. The pattern for frequency = 2 to 5 is similar, although the difference between curves seems to decrease as frequency increases, as Matt suggested would happen as frequency increases beyond 5. The frequency = 1 curve being centered at 0 makes sense for this encoding formula, because I is very small due to there being no similar traces in memory.
+This is unexpected, but it does seem to show that the increase in intensity becomes exponentially smaller with increasing frequency. The increase in amplitude is hard to explain though.
