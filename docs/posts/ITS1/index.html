@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.2.269">
+<meta name="generator" content="quarto-1.2.335">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Bram Goh">
-<meta name="dcterms.date" content="2023-03-20">
+<meta name="dcterms.date" content="2023-03-21">
 
 <title>../../Computational Cognition - ITS (part 1)</title>
 <style>
@@ -188,7 +188,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">March 20, 2023</p>
+        <p class="date">March 21, 2023</p>
       </div>
     </div>
     
@@ -317,41 +317,43 @@ Attaching package: 'data.table'</code></pre>
 <span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(dict_df)){</span>
 <span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>    current <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, length)</span>
 <span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>    positions <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>length, sparsity)</span>
-<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(positions)){</span>
-<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>      current[positions[j]] <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="sc">-</span><span class="dv">1</span>), <span class="dv">1</span>)</span>
-<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>    environment_matrix[i, ] <span class="ot">&lt;-</span> current</span>
-<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(environment_matrix)</span>
-<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to add up environment vectors for all words in a sentence</span></span>
-<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>make_sentence_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(compiled_word_ids, env_matrix) {</span>
-<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>  sentence_ids <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(compiled_word_ids), <span class="at">ncol =</span> <span class="fu">ncol</span>(env_matrix))</span>
-<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(compiled_word_ids)){</span>
-<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>    current_word_ids <span class="ot">&lt;-</span> compiled_word_ids[i, ]</span>
-<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>    current_sentence <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">ncol</span>(env_matrix))</span>
-<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(current_word_ids)){</span>
-<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span>(current_word_ids[j] <span class="sc">==</span> <span class="dv">0</span>){</span>
-<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>        temp_vector <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">ncol</span>(env_matrix))</span>
-<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
-<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>      temp_vector <span class="ot">&lt;-</span> env_matrix[current_word_ids[j], ]</span>
-<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a>      current_sentence <span class="ot">&lt;-</span> current_sentence <span class="sc">+</span> temp_vector</span>
-<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>  sentence_ids[i, ] <span class="ot">&lt;-</span> current_sentence</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>    ones_vector <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">1</span>, sparsity<span class="sc">/</span><span class="dv">2</span>), <span class="fu">rep</span>(<span class="sc">-</span><span class="dv">1</span>, sparsity<span class="sc">/</span><span class="dv">2</span>))</span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>    ordered_ones_vector <span class="ot">&lt;-</span> <span class="fu">sample</span>(ones_vector, sparsity, <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(positions)){</span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>      current[positions[j]] <span class="ot">&lt;-</span> ordered_ones_vector[j]</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>    environment_matrix[i, ] <span class="ot">&lt;-</span> current</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(environment_matrix)</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to add up environment vectors for all words in a sentence</span></span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>make_sentence_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(compiled_word_ids, env_matrix) {</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>  sentence_ids <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(compiled_word_ids), <span class="at">ncol =</span> <span class="fu">ncol</span>(env_matrix))</span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(compiled_word_ids)){</span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>    current_word_ids <span class="ot">&lt;-</span> compiled_word_ids[i, ]</span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>    current_sentence <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">ncol</span>(env_matrix))</span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(current_word_ids)){</span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span>(current_word_ids[j] <span class="sc">==</span> <span class="dv">0</span>){</span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>        temp_vector <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, <span class="fu">ncol</span>(env_matrix))</span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a>      temp_vector <span class="ot">&lt;-</span> env_matrix[current_word_ids[j], ]</span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>      current_sentence <span class="ot">&lt;-</span> current_sentence <span class="sc">+</span> temp_vector</span>
 <span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(sentence_ids)</span>
-<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to generate semantic meaning vectors for each word</span></span>
-<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a>make_meaning_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(env_matrix, sentence_memory){</span>
-<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>  meaning_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(env_matrix), <span class="at">ncol =</span> <span class="fu">ncol</span>(env_matrix))</span>
-<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(env_matrix)){</span>
-<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a>    meaning_matrix[i, ] <span class="ot">&lt;-</span> <span class="fu">get_echo</span>(env_matrix[i, ], sentence_memory, <span class="at">output =</span> <span class="st">"echo"</span>, <span class="at">type =</span> <span class="st">"cosine"</span>)</span>
-<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(meaning_matrix)</span>
-<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>  sentence_ids[i, ] <span class="ot">&lt;-</span> current_sentence</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(sentence_ids)</span>
+<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to generate semantic meaning vectors for each word</span></span>
+<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a>make_meaning_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(env_matrix, sentence_memory){</span>
+<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a>  meaning_matrix <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(env_matrix), <span class="at">ncol =</span> <span class="fu">ncol</span>(env_matrix))</span>
+<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(env_matrix)){</span>
+<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a>    meaning_matrix[i, ] <span class="ot">&lt;-</span> <span class="fu">get_echo</span>(env_matrix[i, ], sentence_memory, <span class="at">output =</span> <span class="st">"echo"</span>, <span class="at">type =</span> <span class="st">"cosine"</span>)</span>
+<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(meaning_matrix)</span>
+<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <section id="attempt-1-tasa-corpus" class="level2">
 <h2 class="anchored" data-anchor-id="attempt-1-tasa-corpus">Attempt 1: TASA corpus</h2>
@@ -381,17 +383,17 @@ Attaching package: 'data.table'</code></pre>
 <span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>sim_top_TASA <span class="ot">&lt;-</span> sim_df_TASA <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(similarities)) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span>
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>sim_top_TASA</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>               word similarities
-1          american    1.0000000
-2       newburyport    0.7846028
-3              gave    0.6849152
-4          peterson    0.6682375
-5          unrolled    0.6531566
-6         syntheses    0.6504689
-7  unresponsiveness    0.6485559
-8      irrespective    0.6399367
-9           chicago    0.6387013
-10            towed    0.6175876</code></pre>
+<pre><code>          word similarities
+1     american    1.0000000
+2       camera    0.6935286
+3  individuals    0.6538814
+4      clouded    0.6025774
+5    corrosive    0.5948728
+6     harpoons    0.5914552
+7       warned    0.5884815
+8        stung    0.5865209
+9    swooshing    0.5856842
+10       races    0.5754529</code></pre>
 </div>
 </div>
 <p>The meaning vectors do not seem to reflect actual semantic meaning. It could be that my makeshift code is flawed. This could also be because the TASA corpus is arranged in paragraphs, rather than sentences.</p>
@@ -446,15 +448,15 @@ chr (14): gold_label, sentence1_binary_parse, sentence2_binary_parse, senten...
 <div class="cell-output cell-output-stdout">
 <pre><code>          word similarities
 1          boy    1.0000000
-2          ink    0.7270636
-3        early    0.7151881
-4         neat    0.6916188
-5    daffodils    0.6882416
-6      tribals    0.6738056
-7      blanket    0.6598177
-8  environment    0.6423749
-9         lots    0.6382897
-10       soars    0.6378569</code></pre>
+2      vibrant    0.8882643
+3     competes    0.8197240
+4      booklet    0.7292181
+5       ascend    0.7246267
+6  vacationing    0.7104282
+7       bricks    0.7013709
+8      bricked    0.6913892
+9    including    0.6876275
+10     highway    0.6442398</code></pre>
 </div>
 </div>
 <p>The words that are ostensibly semantically similar really aren’t at all. Perhaps the sentences in the corpus are unrelated and don’t form a coherent narrative. Below is an attempt using The Great Gatsby.</p>
@@ -494,17 +496,17 @@ chr (14): gold_label, sentence1_binary_parse, sentence2_binary_parse, senten...
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>sim_gat_top <span class="ot">&lt;-</span> sim_gat_df <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(similarity)) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>sim_gat_top</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>        word similarity
-1      party  1.0000000
-2     accept  0.5097045
-3    parlour  0.4926566
-4  incurably  0.4703411
-5     gaiety  0.4550898
-6     bustle  0.4487545
-7       look  0.4322114
-8  testimony  0.4148566
-9  prolonged  0.4011821
-10    listen  0.3972736</code></pre>
+<pre><code>            word similarity
+1          party  1.0000000
+2        obliged  0.6571311
+3       tropical  0.6448372
+4       position  0.6197950
+5          chase  0.6192337
+6       blocking  0.6120850
+7       hundreds  0.6042915
+8  ramifications  0.5928379
+9  undergraduate  0.5839898
+10       swollen  0.5796333</code></pre>
 </div>
 </div>
 <p>Slightly better, but most words are still quite unrelated. Perhaps a longer novel with more sentences would work better?</p>

@@ -1,0 +1,365 @@
+---
+title: "ITS (part 2)"
+author: "Bram Goh"
+date: "2023-03-24"
+categories: [code]
+image: "matt_mds.png"
+---
+
+# Replicating taxonomic structure from Jamieson et al. (2018)
+
+The goal is to replicate the top panel of Figure 8 in Jamieson et al. (2018): the two-dimensional MDS solutions for various words from different categories (shown in Table 2 in the paper).
+
+```{r}
+library(RsemanticLibrarian)
+library(tidyverse)
+library(tm)
+library(tidytext)
+library(tokenizers)
+library(data.table)
+library(lsa)
+```
+
+```{r}
+# Activation function (borrowed from Matt) for a single probe (i.e. a probe vector)
+
+get_activations <- function(probe, mem, type) {
+  if(type == "hintzman"){
+    return(as.numeric(((probe %*% t(mem)) / rowSums(t((probe == 0) * t(mem == 0)) == 0))))
+  }
+  if(type == "cosine"){
+    temp_activ <- as.numeric(RsemanticLibrarian::cosine_x_to_m(probe,mem))
+    temp_activ[is.nan(temp_activ) == TRUE] <- 0
+    return(temp_activ)
+  }
+}
+
+# Generate echo (borrowed from Matt)
+get_echo <- function(probe, mem, tau=3, output='intensity', type) {
+    activations <- get_activations(probe, mem, type)
+    if(output == "intensity"){
+      return(sum(activations^tau))
+    }
+    if(output == "echo"){
+      weighted_memory <- mem * (activations^tau)  
+      summed_echo <- colSums(weighted_memory)
+      return(summed_echo)
+    }
+    if(output == "both"){
+      weighted_memory <- mem * (activations^tau)  
+      summed_echo <- colSums(weighted_memory)
+      model_output <- list(intensity = sum(activations^tau),
+                           echo = summed_echo)
+      return(model_output)
+    }
+    
+}
+
+# Function to replace words with their dictionary ids
+replace_word_with_id <- function(sentence_df, dict_df, max_sent_length){
+  sentence_id_matrix <- c()
+  for(i in 1:length(sentence_df$sentence)){
+    current_sent <- rep(0, max_sent_length)
+    words_list <- tokenize_words(sentence_df$sentence[i])
+    words <- words_list[[1]]
+    for(j in 1:length(words)){
+      current_id <- which(dict_df$word == words[j])
+      if(length(current_id) == 0){
+        current_id <- 0
+      }
+      current_sent[j] <- current_id
+    }
+    sentence_id_matrix <- rbind(sentence_id_matrix, current_sent)
+  }
+  return(sentence_id_matrix)
+}
+
+# Function to generate random environment vectors for each word in dictionary
+make_env_vectors <- function(dict_df, length, sparsity) {
+  environment_matrix <- matrix(0, nrow = nrow(dict_df), ncol = length)
+  for(i in 1:nrow(dict_df)){
+    current <- rep(0, length)
+    positions <- sample(1:length, sparsity)
+    ones_vector <- c(rep(1, sparsity/2), rep(-1, sparsity/2))
+    ordered_ones_vector <- sample(ones_vector, sparsity, replace = FALSE)
+    for(j in 1:length(positions)){
+      current[positions[j]] <- ordered_ones_vector[j]
+    }
+    environment_matrix[i, ] <- current
+  }
+  return(environment_matrix)
+}
+
+# Function to add up environment vectors for all words in a sentence
+make_sentence_vectors <- function(compiled_word_ids, env_matrix) {
+  sentence_ids <- matrix(0, nrow = nrow(compiled_word_ids), ncol = ncol(env_matrix))
+  for(i in 1:nrow(compiled_word_ids)){
+    current_word_ids <- compiled_word_ids[i, ]
+    current_sentence <- rep(0, ncol(env_matrix))
+    for(j in 1:length(current_word_ids)){
+      if(current_word_ids[j] == 0){
+        temp_vector <- rep(0, ncol(env_matrix))
+      } else {
+      temp_vector <- env_matrix[current_word_ids[j], ]
+      }
+      current_sentence <- current_sentence + temp_vector
+  }
+  sentence_ids[i, ] <- current_sentence
+  }
+  return(sentence_ids)
+}
+
+# Function to generate semantic meaning vectors for each word
+make_meaning_vectors <- function(env_matrix, sentence_memory){
+  meaning_matrix <- matrix(0, nrow = nrow(env_matrix), ncol = ncol(env_matrix))
+  for(i in 1:nrow(env_matrix)){
+    meaning_matrix[i, ] <- get_echo(env_matrix[i, ], sentence_memory, output = "echo", type = "cosine")
+  }
+  return(meaning_matrix)
+}
+
+# Find top n similar words in terms of semantic meaning
+find_similar_words <- function(meaning_matrix, dictionary, word_to_find, n) {
+  similarities <- cosine_x_to_m(meaning_matrix[which(dictionary$word == word_to_find), ], meaning_matrix)
+similarities_df <- data.frame(dictionary, similarities = similarities)
+sim_top <- similarities_df %>% arrange(desc(similarities)) %>% slice(1:n)
+return(sim_top)
+}
+```
+
+Unfortunately, my computer doesn't have sufficient processing power to run 10,000 TASA sentences with vectors 10,000 elements long (sparsity = 8). I am going to try using only the first 1000 sentences.
+
+```{r}
+TASA_full <- read.table("tasaDocsPara.txt", 
+                          sep = "\t", 
+                          fill = FALSE, 
+                          strip.white = TRUE)
+
+JonesMewhort_Figure3 <- c("financial","savings","finance","pay","invested",
+                          "loaned","borrow","lend","invest","investments",
+                          "bank","spend","save","astronomy","physics",
+                          "chemistry","psychology","biology","scientific",
+                          "mathematics","technology","scientists","science",
+                          "research","sports","team","teams","football",
+                          "coach","sport","players","baseball","soccer",
+                          "tennis","basketball")
+```
+
+## Shrink corpus size (= 1000), maintain vector length
+
+```{r}
+training_TASA <- data.frame(sentence = TASA_full$V1[1:1000])
+
+TASA_dict <- training_TASA %>% unnest_tokens(output = "word", input = sentence, token = "words") %>% unique()
+
+TASA_ids <- replace_word_with_id(training_TASA, TASA_dict, 300)
+
+env_vectors_TASA <- make_env_vectors(TASA_dict, 10000, 8)
+
+sent_vectors_TASA <- make_sentence_vectors(TASA_ids, env_vectors_TASA)
+
+memory_TASA <- sent_vectors_TASA
+
+dict_env_df <- data.frame(TASA_dict, env_vectors_TASA) 
+
+env_its <- dict_env_df[which(TASA_dict$word %in% JonesMewhort_Figure3), ]
+
+env_its_vecs <- env_its %>% select(-word) %>% as.matrix()
+
+its_meaning_vecs <- make_meaning_vectors(env_its_vecs, memory_TASA)
+rownames(its_meaning_vecs) <- env_its$word
+
+cosine_table_bram <- lsa::cosine(t(its_meaning_vecs))
+
+corrplot::corrplot(cosine_table_bram,
+                   method="circle",
+                   order="hclust",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5)
+```
+
+Words from the same categories aren't always related to each other. Something's wrong, possibly because of the smaller corpus size?
+
+```{r}
+
+its_mds <- its_meaning_vecs %>% dist() %>% cmdscale() %>% as_tibble(.name_repair = "minimal")
+colnames(its_mds) <- c("Dim1", "Dim2")
+
+ggplot(its_mds, aes(x = Dim1, y = Dim2, label = rownames(its_meaning_vecs))) + geom_point() + geom_text()
+```
+
+This doesn't make sense.
+
+## Trying Matt's code
+
+```{r}
+
+matt_training <- TASA_full$V1[1:10000]
+
+corpus_dictionary <- function(words){
+  neat_words <- words %>%
+                as.character() %>%
+                strsplit(split=" ") %>%
+                unlist() %>%
+                qdapRegex::rm_white_lead_trail() %>%
+                strsplit(split=" ") %>%
+                unlist() %>%
+                unique()
+  return(neat_words)
+}
+
+dictionary <- corpus_dictionary(matt_training)
+
+clean <- function(words){
+  if(length(words) == 1) {
+    neat_words <- words %>%
+      as.character() %>%
+      strsplit(split=" ") %>%
+      unlist() %>%
+      qdapRegex::rm_white_lead_trail() %>%
+      strsplit(split=" ") %>%
+      unlist() 
+    return(neat_words)
+  }
+}
+
+clean_vector <- function(words){
+  return(lapply(unlist(strsplit(words,split="[.]")),clean))
+}
+
+sentences_list <- clean_vector(matt_training)
+
+word_ids <- sl_word_ids_sentences(sentences_list, dictionary)
+
+environments <- sl_create_riv(10000, length(dictionary), 8)
+
+its_memory <- matrix(0,ncol=dim(environments)[2],nrow=length(word_ids))
+for(i in 1:length(sentences_list)){
+  its_memory[i,] <- colSums(environments[word_ids[[i]],])
+}
+
+# function to generate echoes for a list of words
+subset_semantic_vectors <- function(strings,dictionary,e_vectors,sentence_memory,tau=3){
+  
+  word_meaning <- matrix(0, ncol = dim(e_vectors)[2],
+                         nrow = length(strings))
+  
+  for (i in 1:length(strings)) {
+    word_id <- which(dictionary %in% strings[i])
+    probe <- e_vectors[word_id, ]
+    activations <- cosine_x_to_m(probe, sentence_memory)
+    echo <- colSums(as.numeric(activations ^ tau) * (sentence_memory))
+    word_meaning[i, ] <- echo
+  }
+  
+  row.names(word_meaning) <- strings
+  
+  return(word_meaning)
+  
+}
+
+JonesMewhort_vectors <- subset_semantic_vectors(JonesMewhort_Figure3,
+                                                dictionary,
+                                                environments,
+                                                its_memory,
+                                                tau=3)
+
+cosine_table <- lsa::cosine(t(JonesMewhort_vectors))
+
+corrplot::corrplot(cosine_table,
+                   method="circle",
+                   order="hclust",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5)
+```
+
+The correlation matrix makes sense. Words from the different categories are more or less correlated with others in the same category.
+
+```{r}
+matt_mds <- JonesMewhort_vectors %>% dist() %>% cmdscale() %>% as_tibble(.name_repair = "minimal")
+colnames(matt_mds) <- c("Dim1", "Dim2")
+
+ggplot(matt_mds, aes(x = Dim1, y = Dim2, label = rownames(its_meaning_vecs))) + geom_point() + geom_text()
+```
+
+This doesn't make sense! Could it be because I used a different MDS function?
+
+## Comparing my functions with Matt's
+
+```{r}
+
+# Redoing Matt's process with just the first 1000 sentences
+
+matt_training_test <- TASA_full$V1[1:1000]
+
+dictionary_test <- corpus_dictionary(matt_training_test)
+
+sentences_list_test <- clean_vector(matt_training_test)
+
+word_ids_test <- sl_word_ids_sentences(sentences_list_test, dictionary_test)
+
+environments_test <- sl_create_riv(10000, length(dictionary_test), 8)
+
+its_memory_test <- matrix(0,ncol=dim(environments_test)[2],nrow=length(word_ids_test))
+for(i in 1:length(sentences_list_test)){
+  its_memory_test[i,] <- colSums(environments_test[word_ids_test[[i]],])
+}
+
+Jones_vector_test <- subset_semantic_vectors(JonesMewhort_Figure3, dictionary_test, environments_test, its_memory_test, tau = 3) 
+
+# Comparing dictionaries
+
+all(TASA_dict$word == dictionary_test)
+
+# Comparing sentences replaced with IDs (choosing a random sentence to compare i.e. sentence 19)
+
+all(TASA_ids[19, 1:length(word_ids_test[[19]])] == word_ids_test[[19]])
+
+# Comparing sentence memory (using the same environment vectors i.e. Matt's)
+
+test_using_matt_env <- make_sentence_vectors(TASA_ids, environments_test)
+
+all(test_using_matt_env == its_memory_test)
+
+# Comparing semantic meaning vectors
+
+test_env_its <- environments_test[which(TASA_dict$word %in% JonesMewhort_Figure3), ]
+
+test_meaning_vecs <- make_meaning_vectors(test_env_its, test_using_matt_env)
+
+all(test_meaning_vecs == JonesMewhort_vectors)
+```
+
+Our functions that create semantic meaning vectors differ. Looking at the code for each function, however, I cannot see why the two would diverge.
+
+## Looking at Randy's code
+
+As laid out in the paper, his environment vectors don't contain integers (1s, 0s and -1s) but a randomly sampled value with mean 0 and variance 1/(vector length), although the variance is actually 1/sqrt(vector length) in the code. Not sure how this compares to using only the three integer values and taking into account sparsity.
+
+```{r}
+
+semantic_vecs <- function (probe_words, env_vectors, memory, tau = 3) {
+  semantic_vectors <- matrix(0, length(probe_words), ncol(memory))
+  for (i in 1:length(probe_words)) {
+    probe <- unlist(strsplit(probe_words[i], split="/"))
+    if (all(probe %in% rownames(env_vectors)) == TRUE) {
+      for (j in 1:nrow(memory)) {
+        A <- 1.0
+        for (k in 1:length(probe)) {
+          A <- A * cosine_randy(env_vectors[probe[k],], memory[j,])**tau
+        }
+        semantic_vectors[i,] <- semantic_vectors[i,] + A * memory[j,]
+      }
+    }
+  }
+  rownames(semantic_vectors) <- probe_words
+  semantic_vectors <- semantic_vectors[abs(rowSums(semantic_vectors)) != 0,]
+  return(semantic_vectors)
+}
+```
+
+I don't understand this function for making semantic vectors. Why is A multiplied by the memory again afterwards and why is A cumulative over different probes?

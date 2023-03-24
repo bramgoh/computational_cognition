@@ -1,7 +1,7 @@
 ---
 title: "ITS (part 1)"
 author: "Bram Goh"
-date: "2023-03-20"
+date: "2023-03-21"
 categories: [code]
 image: ""
 ---
@@ -79,8 +79,10 @@ make_env_vectors <- function(dict_df, length, sparsity) {
   for(i in 1:nrow(dict_df)){
     current <- rep(0, length)
     positions <- sample(1:length, sparsity)
+    ones_vector <- c(rep(1, sparsity/2), rep(-1, sparsity/2))
+    ordered_ones_vector <- sample(ones_vector, sparsity, replace = FALSE)
     for(j in 1:length(positions)){
-      current[positions[j]] <- sample(c(1, -1), 1)
+      current[positions[j]] <- ordered_ones_vector[j]
     }
     environment_matrix[i, ] <- current
   }
