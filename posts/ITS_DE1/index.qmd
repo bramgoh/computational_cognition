@@ -1,0 +1,282 @@
+---
+title: "Exploring discrepancy encoding with ITS (Part 1)"
+author: "Bram Goh"
+date: "2023-03-31"
+categories: [code]
+image: "toy_no_de.png"
+---
+
+# Implementing discrepancy encoding in a toy language
+
+Goals for this exercise:
+
+-   Replicate toy language involving the homonym "break" from Jamieson et al. (2018)
+
+-   Implement discrepancy encoding in Jamieson et al.'s (2018) toy language
+
+## Replicating "break" toy language (without discrepancy encoding)
+
+```{r}
+library(RsemanticLibrarian)
+library(tidyverse)
+library(lsa)
+```
+
+### Functions
+
+```{r}
+
+# Activation function (borrowed from Matt) for a single probe (i.e. a probe vector)
+
+get_activations <- function(probe, mem, type) {
+  if(type == "hintzman"){
+    return(as.numeric(((probe %*% t(mem)) / rowSums(t((probe == 0) * t(mem == 0)) == 0))))
+  }
+  if(type == "cosine"){
+    temp_activ <- as.numeric(cosine_x_to_m(probe,mem))
+    temp_activ[is.nan(temp_activ) == TRUE] <- 0
+    return(temp_activ)
+  }
+}
+
+# Generate echo (borrowed from Matt)
+get_echo <- function(probe, mem, tau=3, output='intensity', type) {
+    activations <- get_activations(probe, mem, type)
+    if(output == "intensity"){
+      return(sum(activations^tau))
+    }
+    if(output == "echo"){
+      weighted_memory <- mem * (activations^tau)  
+      summed_echo <- colSums(weighted_memory)
+      return(summed_echo)
+    }
+    if(output == "both"){
+      weighted_memory <- mem * (activations^tau)  
+      summed_echo <- colSums(weighted_memory)
+      model_output <- list(intensity = sum(activations^tau),
+                           echo = summed_echo)
+      return(model_output)
+    }
+    
+}
+
+# Create dictionary (modified from RsemanticLibrarian)
+
+corpus_dictionary <- function(words){
+  neat_words <- words %>%
+                as.character() %>%
+                strsplit(split=" ") %>%
+                unlist() %>%
+                qdapRegex::rm_white_lead_trail() %>%
+                strsplit(split=" ") %>%
+                unlist() %>%
+                unique()
+  return(neat_words)
+}
+
+# Functions to ensure strings only contain words (modified from RsemanticLibrarian)
+clean <- function(words){
+  if(length(words) == 1) {
+    neat_words <- words %>%
+      as.character() %>%
+      strsplit(split=" ") %>%
+      unlist() %>%
+      qdapRegex::rm_white_lead_trail() %>%
+      strsplit(split=" ") %>%
+      unlist() 
+    return(neat_words)
+  }
+}
+
+clean_vector <- function(words){
+  return(lapply(unlist(strsplit(words,split="[.]")), clean))
+}
+
+# Function to generate echoes for a list of words (from Matt)
+subset_semantic_vectors <- function(strings,dictionary,e_vectors,sentence_memory,tau=3){
+  
+  word_meaning <- matrix(0, ncol = dim(e_vectors)[2],
+                         nrow = length(strings))
+  
+  for (i in 1:length(strings)) {
+    word_id <- which(dictionary %in% strings[i])
+    probe <- e_vectors[word_id, ]
+    echo <- get_echo(probe, sentence_memory, tau = tau, output = "echo", type = "cosine")
+    word_meaning[i, ] <- echo
+  }
+  row.names(word_meaning) <- strings
+  
+  return(word_meaning)
+}
+
+# Find top n similar words in terms of semantic meaning
+find_similar_words <- function(meaning_matrix, dictionary, word_to_find, n) {
+  similarities <- cosine_x_to_m(meaning_matrix[which(dictionary$word == word_to_find), ], meaning_matrix)
+similarities_df <- data.frame(dictionary, similarities = similarities)
+sim_top <- similarities_df %>% arrange(desc(similarities)) %>% slice(1:n)
+return(sim_top)
+}
+```
+
+### Setting up toy language (with 1000 sentences)
+
+```{r}
+
+l_value <- 0.7
+
+noun_human <- c("man", "woman")
+verb_vehicle <- c("stop", "break")
+verb_dinner <- c("smash", "break")
+verb_news <- c("report", "break")
+noun_vehicle <- c("car", "truck")
+noun_dinner <- c("plate", "glass")
+noun_news <- c("story", "news")
+
+sentences <- data.frame(sentence_no = 1:1000, sentence = NA)
+sentence_frames <- c("vehicle", "dinner", "news")
+for(i in 1:nrow(sentences)) {
+  current_frame <- sample(sentence_frames, 1)
+  if(current_frame == "vehicle"){
+  sentences$sentence[i] <- paste(sample(noun_human, 1), sample(verb_vehicle, 1), sample(noun_vehicle, 1))
+  } else if(current_frame == "dinner"){
+  sentences$sentence[i] <- paste(sample(noun_human, 1), sample(verb_dinner, 1), sample(noun_dinner, 1))
+  } else {
+  sentences$sentence[i] <- paste(sample(noun_human, 1), sample(verb_news, 1), sample(noun_news, 1))
+  }
+}
+
+dictionary <- unique(c(noun_human, verb_vehicle, verb_dinner, verb_news, noun_vehicle, noun_dinner, noun_news))
+clean_sentences <- clean_vector(sentences$sentence)
+sentence_ids <- sl_word_ids_sentences(clean_sentences, dictionary)
+env_vectors <- sl_create_riv(20000, length(dictionary), 16)
+
+# Setting up prior memory (cannot start with other three-word sentences, as they are too sparse. Have to start with less sparse memory to avoid NaN values). Then encoding sentences without discrepancy encoding (also applying L value)
+prior_memory <- t(replicate(4, sample(c(-1,0,1), ncol(env_vectors), replace = TRUE)))
+toy_memory <- rbind(prior_memory, matrix(0, ncol = ncol(env_vectors), nrow = length(sentence_ids)))
+for(i in 1:length(sentence_ids)){
+  current_sentence <- colSums(env_vectors[sentence_ids[[i]], ])
+  learning_vector <- sample(c(0,1), ncol(env_vectors), replace = TRUE, prob = c(1-l_value, l_value))
+  toy_memory[4+i, ] <- current_sentence*learning_vector
+}
+
+# Get echoes (semantic meaning vectors)
+meaning <- subset_semantic_vectors(dictionary, dictionary, env_vectors, toy_memory, tau = 3)
+
+cosine_toy <- cosine(t(meaning))
+
+corrplot::corrplot(cosine_toy,
+                   method="circle",
+                   order="hclust",
+                   tl.col="black",
+                   tl.cex=.7,
+                   title="",
+                   cl.cex=.6)
+```
+
+```{r}
+
+mds_toy <- cmdscale(1-cosine_toy) %>% as_tibble(.name_repair = "minimal")
+colnames(mds_toy) <- c("Dim1", "Dim2")
+
+ggplot(mds_toy, aes(x = Dim1, y = Dim2, label = dictionary)) + geom_text() + geom_point()
+```
+
+Even with just 1000 sentences (much fewer than the 20,000 in Jamieson et al.), I was able to reproduce the MDS solution.
+
+I have a question about what the distances mean. They don't seem to measure "direct" co-occurence, since man/woman, car/truck, glass/plate and news/story never appear in the same sentences together. Do they measure a higher-order similarity, since for e.g. stop only occurs with car/truck?
+
+## Implementing MINERVA-AL discrepancy encoding in "break" toy language
+
+```{r}
+
+tau_de <- 3
+
+# Setting up prior memory and discrepancy encoding (with L value)
+prior_memory <- t(replicate(4, sample(c(-1,0,1), ncol(env_vectors), replace = TRUE)))
+toy_memory_de <- rbind(prior_memory, matrix(0, nrow = length(sentence_ids), ncol = ncol(env_vectors)))
+
+for(i in 1:length(sentence_ids)){
+  current_sentence <- colSums(env_vectors[sentence_ids[[i]], ])
+  echo <- get_echo(current_sentence, toy_memory_de, tau = tau_de, output = "echo", type = "cosine")
+  echo_norm <- echo/max(abs(echo))
+  learning_vector <- sample(c(0,1), ncol(env_vectors), replace = TRUE, prob = c(1-l_value, l_value))
+  discrep <- current_sentence - echo_norm
+  toy_memory_de[4+i, ] <- discrep * learning_vector
+  }
+```
+
+```{r}
+
+# Get echoes (semantic meaning vectors)
+meaning_de <- subset_semantic_vectors(dictionary, dictionary, env_vectors, toy_memory_de, tau = 3)
+
+cosine_toy_de <- cosine(t(meaning_de))
+
+corrplot::corrplot(cosine_toy_de,
+                   method="circle",
+                   order="hclust",
+                   tl.col="black",
+                   tl.cex=.7,
+                   title="",
+                   cl.cex=.6)
+
+```
+
+Clustering is less obvious.
+
+```{r}
+mds_toy_de <- cmdscale(1-cosine_toy_de) %>% as_tibble(.name_repair = "minimal")
+colnames(mds_toy_de) <- c("Dim1", "Dim2")
+
+ggplot(mds_toy_de, aes(x = Dim1, y = Dim2, label = dictionary)) + geom_text() + geom_point()
+```
+
+The distinction between some of the clusters is lost!
+
+## Implementing Collins et al.'s (2020) discrepancy encoding
+
+```{r}
+
+l_max <- 1.0
+
+# Setting up prior memory and discrepancy encoding (with L value)
+prior_memory <- t(replicate(4, sample(c(-1,0,1), ncol(env_vectors), replace = TRUE)))
+toy_memory_collins <- rbind(prior_memory, matrix(0, nrow = length(sentence_ids), ncol = ncol(env_vectors)))
+
+for(i in 1:length(sentence_ids)){
+  current_sentence <- colSums(env_vectors[sentence_ids[[i]], ])
+  current_intensity <- get_echo(current_sentence, toy_memory_collins, tau = tau_de, output = "intensity", type = "cosine")
+    l_collins <- l_max * (1 - 1/(1 + exp(1)^(-12 * current_intensity + 2)))
+  learning_vector <- sample(c(0,1), ncol(env_vectors), replace = TRUE, prob = c(1-l_collins, l_collins))
+  toy_memory_collins[4+i, ] <- current_sentence * learning_vector
+  }
+```
+
+```{r}
+
+# Get echoes (semantic meaning vectors)
+meaning_collins <- subset_semantic_vectors(dictionary, dictionary, env_vectors, toy_memory_collins, tau = 3)
+
+cosine_toy_collins <- cosine(t(meaning_collins))
+
+corrplot::corrplot(cosine_toy_collins,
+                   method="circle",
+                   order="hclust",
+                   tl.col="black",
+                   tl.cex=.7,
+                   title="",
+                   cl.cex=.6)
+```
+
+There seems to be clustering!
+
+```{r}
+library(plotly)
+
+mds_toy_collins <- cmdscale(1-cosine_toy_collins) %>% as_tibble(.name_repair = "minimal")
+colnames(mds_toy_collins) <- c("Dim1", "Dim2")
+
+ggplot(mds_toy_collins, aes(x = Dim1, y = Dim2, label = dictionary)) + geom_text() + geom_point()
+```
+
+The words are clustered differently but are still in discernible clusters. Stop, report and smash seem to be roughly equidistant from break, as in the original ITS diagram. However, as opposed to the ITS diagram, man and woman are far from each other. Perhaps a higher-order dimensionality (e.g. 3D) plot would make this more sensible?
