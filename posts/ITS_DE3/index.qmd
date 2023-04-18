@@ -1,0 +1,526 @@
+---
+title: "Exploring discrepancy encoding with ITS (Part 3)"
+author: "Bram Goh"
+date: "2023-04-07"
+categories: [code]
+image: "ALvsnoDE.png"
+---
+
+# Using toy language setup from Sandin et al.'s (2017)
+
+The goal of this exercise is to use the toy language setup in Sandin et al. (2017) (without actually using the intricacies of random indexing) to:
+
+-   Find the number of sentences required for learning at each L to obtain echoes similar to that of L = 1.0
+
+most appropriate parameters (tau, L) without discrepancy encoding
+
+## Matt's code
+
+```{r}
+
+library(tidyverse)
+library(RsemanticLibrarian)
+library(data.table)
+library(tm)
+
+n_words_matt <- 1000
+band_width_matt <- 50
+
+#rows are words, columns are sentences
+band_matrix_matt <- Matrix::bandSparse(n = n_words_matt,k=0:band_width_matt)
+band_matrix_matt <- as.matrix(band_matrix_matt)*1
+
+# the following use functions from Rsemanticlibrarian
+
+# get all unique words from training text
+dictionary_words_matt <- 1:n_words_matt
+
+# create a list of sentences by index in dictionary
+sentence_ids_matt <- list()
+for(i in 1:ncol(band_matrix_matt)){
+  sentence_ids_matt[[i]] <- which(band_matrix_matt[,i] == 1)
+}
+
+#create random environment vectors for each word in dictionary
+environment_matt <- sl_create_riv(10000,length(dictionary_words_matt),8)
+
+# make ITS sentence memory
+# for each sentence, sum the environment vectors for the words in the sentence
+its_memory_matt <- matrix(0,ncol=dim(environment_matt)[2],nrow=length(sentence_ids_matt))
+for(i in 1:length(sentence_ids_matt)){
+  if(is.null(nrow(environment_matt[sentence_ids_matt[[i]],]))){
+    its_memory_matt[i,] <- environment_matt[sentence_ids_matt[[i]],]
+  } else {
+    its_memory_matt[i,] <- colSums(environment_matt[sentence_ids_matt[[i]],])
+  }
+  
+}
+
+words_to_plot_matt <- c(1:100)
+
+# function to generate echoes for a list of words
+subset_semantic_vectors <- function(strings,dictionary,e_vectors,sentence_memory,tau=3){
+  
+  word_meaning <- matrix(0, ncol = dim(e_vectors)[2],
+                         nrow = length(strings))
+  
+  for (i in 1:length(strings)) {
+    word_id <- which(dictionary %in% strings[i])
+    probe <- e_vectors[word_id, ]
+    activations <- cosine_x_to_m(probe, sentence_memory)
+    echo <- colSums(as.numeric(activations ^ tau) * (sentence_memory))
+    word_meaning[i, ] <- echo
+  }
+  
+  row.names(word_meaning) <- strings
+  
+  return(word_meaning)
+  
+}
+
+word_semantic_vectors_matt <- subset_semantic_vectors(words_to_plot_matt,                                                dictionary_words_matt,
+    environment_matt,
+      its_memory_matt,
+          tau=3)
+
+cosine_matt <- lsa::cosine(t(word_semantic_vectors_matt))
+
+# Ground truths to compare to: first- and second- order similarity
+first_order_cosines_matt <- lsa::cosine(t(band_matrix_matt[words_to_plot_matt,]))
+second_order_cosines_matt <- lsa::cosine(t(first_order_cosines_matt))
+
+matt_R2_first <- cor(c(cosine_matt),c(first_order_cosines_matt))^2
+matt_R2_second <- cor(c(cosine_matt),c(second_order_cosines_matt))^2
+```
+
+## Making minor changes and comparing to Matt's code
+
+```{r}
+n_words <- 130
+band_width <- 10
+
+# Setup of word-sentence co-occurence matrix
+band_matrix <- Matrix::bandSparse(n = n_words,k=0:(band_width-1))
+band_matrix <- as.matrix(band_matrix)*1
+
+# ITS setup (each word appears in the same number of sentences)
+dictionary_words <- 1:n_words
+
+sentence_ids <- list()
+for(i in 1:ncol(band_matrix)){
+  sentence_ids[[i]] <- which(band_matrix[,i] == 1)
+}
+sentence_ids <- sentence_ids[11:119]
+environment <- sl_create_riv(10000,length(dictionary_words),8)
+
+words_to_plot <- c(11:110)
+```
+
+```{r}
+# Ground truths to compare to: first- and second- order similarity
+first_order_cosines <- lsa::cosine(t(band_matrix[words_to_plot,]))
+second_order_cosines <- lsa::cosine(t(first_order_cosines))
+```
+
+```{r}
+
+prior_memory <- t(replicate(4, sample(c(-1,0,1), ncol(environment), replace = TRUE)))
+
+its_memory_1 <- rbind(prior_memory, matrix(0,ncol=dim(environment)[2],nrow=length(sentence_ids)))
+for(i in 1:length(sentence_ids)){
+  if(is.null(nrow(environment[sentence_ids[[i]],]))){
+    its_memory_1[4+i,] <- environment[sentence_ids[[i]],]
+  } else {
+    its_memory_1[4+i,] <- colSums(environment[sentence_ids[[i]],])
+  }
+}
+
+semantic_vectors_1 <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment,
+                                                its_memory_1,
+                                                tau=3)
+
+cosine_1 <- lsa::cosine(t(semantic_vectors_1))
+
+corrplot::corrplot(cosine_1,
+                   method="circle",
+                   order="original",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5,
+                   outline=FALSE,
+                   addgrid.col=NA)
+```
+
+```{r}
+R2_first_1 <- cor(c(cosine_1),c(first_order_cosines))^2
+R2_first_1
+matt_R2_first
+
+R2_second_1 <- cor(c(cosine_1),c(second_order_cosines))^2
+R2_second_1
+matt_R2_second
+```
+
+I've changed three things in Matt's code: i) changing the bandwidth from 11 to 10; iii) making sure each sentence has the same number of words (i.e. 10); ii) including prior memory (i.e. noise) into ITS memory. Our first-order R-squared values are similar, but my second-order R-squared is slightly higher?
+
+## Comparing the number of sentences required for adequate learning at different L
+
+Using the R-squared between ITS and the second-order word-word similarities as the metric, we can find out, given a L value (e.g. L = .3, .5, .7), how many sentences a subject needs to obtain learning comparable to when L = 1.0.
+
+### No discrepancy encoding (L = 1.0, i.e. point of comparison)
+
+```{r}
+max_sent_freq <- 15
+
+n_of_sim <- 10
+
+# L = 1.0
+
+R2_full_1.0 <- matrix(0, nrow = n_of_sim, ncol = max_sent_freq)
+
+for(i in 1:n_of_sim){
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+
+R2_second <- numeric(length = max_sent_freq)
+  
+its_memory <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],])
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_1.0 <- lsa::cosine(t(semantic_vectors))
+  R2_second[j] <- cor(c(cosines_ITS_1.0),c(second_order_cosines))^2
+  }
+R2_full_1.0[i, ] <- R2_second
+}
+```
+
+### No discrepancy encoding (L = .3)
+
+First, let's visualize how the word-sentence similarities change as sentences are presented with higher frequency.
+
+```{r}
+cosines_list_0.3 <- list()
+
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+
+its_memory <- prior_memory
+
+for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],]) * sample(c(0,1), ncol(environment_sub), replace = TRUE, prob = c(1 - .3, .3))
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_list_0.3[[j]] <- lsa::cosine(t(semantic_vectors))
+}
+```
+
+```{r}
+for(i in 1:length(cosines_list_0.3)){
+  corrplot::corrplot(cosines_list_0.3[[i]],
+                   method="circle",
+                   order="original",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5,
+                   outline=FALSE,
+                   addgrid.col=NA)
+}
+```
+
+Now, for the actual simulations.
+
+```{r}
+
+R2_full_0.3 <- matrix(0, nrow = n_of_sim, ncol = max_sent_freq)
+
+for(i in 1:n_of_sim){
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+
+R2_second <- numeric(length = max_sent_freq)
+  
+its_memory <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],]) * sample(c(0,1), ncol(environment_sub), replace = TRUE, prob = c(1 - .3, .3))
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_0.3 <- lsa::cosine(t(semantic_vectors))
+  R2_second[j] <- cor(c(cosines_ITS_0.3),c(second_order_cosines))^2
+  }
+R2_full_0.3[i, ] <- R2_second
+}
+```
+
+### No discrepancy encoding (L = .5)
+
+Visualizing the word-sentence similarities with increasing sentence frequency:
+
+```{r}
+
+cosines_list_0.5 <- list()
+
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+  
+its_memory <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],]) * sample(c(0,1), ncol(environment_sub), replace = TRUE, prob = c(1 - .5, .5))
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_list_0.5[[j]] <- lsa::cosine(t(semantic_vectors))
+  }
+```
+
+```{r}
+for(i in 1:length(cosines_list_0.5)){
+  corrplot::corrplot(cosines_list_0.5[[i]],
+                   method="circle",
+                   order="original",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5,
+                   outline=FALSE,
+                   addgrid.col=NA)
+}
+```
+
+Actual simulation:
+
+```{r}
+
+R2_full_0.5 <- matrix(0, nrow = n_of_sim, ncol = max_sent_freq)
+
+for(i in 1:n_of_sim){
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+
+R2_second <- numeric(length = max_sent_freq)
+  
+its_memory <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],]) * sample(c(0,1), ncol(environment_sub), replace = TRUE, prob = c(1 - .5, .5))
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_0.5 <- lsa::cosine(t(semantic_vectors))
+  R2_second[j] <- cor(c(cosines_ITS_0.5),c(second_order_cosines))^2
+  }
+R2_full_0.5[i, ] <- R2_second
+}
+```
+
+### No discrepancy encoding (L = .7)
+
+Visualizing word-sentence similarities with increasing sentence frequency:
+
+```{r}
+cosines_list_0.7 <- list()
+
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+  
+its_memory <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],]) * sample(c(0,1), ncol(environment_sub), replace = TRUE, prob = c(1 - .7, .7))
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_list_0.7[[j]] <- lsa::cosine(t(semantic_vectors))
+  }
+```
+
+```{r}
+for(i in 1:length(cosines_list_0.7)){
+  corrplot::corrplot(cosines_list_0.7[[i]],
+                   method="circle",
+                   order="original",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5,
+                   outline=FALSE,
+                   addgrid.col=NA)
+}
+```
+
+Actual simulation:
+
+```{r}
+
+R2_full_0.7 <- matrix(0, nrow = n_of_sim, ncol = max_sent_freq)
+
+for(i in 1:n_of_sim){
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+
+R2_second <- numeric(length = max_sent_freq)
+  
+its_memory <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    its_memory_chunk <- matrix(0, ncol=dim(environment_sub)[2],nrow=length(sentence_ids))
+    for(k in 1:length(sentence_ids_reordered)) {
+    its_memory_chunk[k, ] <- colSums(environment_sub[sentence_ids_reordered[[k]],]) * sample(c(0,1), ncol(environment_sub), replace = TRUE, prob = c(1 - .7, .7))
+    }
+    its_memory <- rbind(its_memory, its_memory_chunk)
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_0.7 <- lsa::cosine(t(semantic_vectors))
+  R2_second[j] <- cor(c(cosines_ITS_0.7),c(second_order_cosines))^2
+  }
+R2_full_0.7[i, ] <- R2_second
+}
+```
+
+### MINERVA-AL discrepancy encoding (L = 1.0)
+
+Let's visualize the progression of ITS encoding by visualizing the word-sentence similarities.
+
+```{r}
+cosines_list_AL <- list()
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+  
+its_memory_AL <- prior_memory
+
+for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids_reordered)) {
+    current_sentence <- colSums(environment_sub[sentence_ids_reordered[[k]],])
+    echo <- colSums(as.numeric(cosine_x_to_m(current_sentence, its_memory_AL) ^ 3) * (its_memory_AL))
+    echo_norm <- echo/max(abs(echo))
+    its_memory_AL <- rbind(its_memory_AL, (current_sentence - echo_norm))
+    }
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory_AL,
+                                                tau=3)
+  cosines_list_AL[[j]] <- lsa::cosine(t(semantic_vectors))
+}
+```
+
+```{r}
+for(i in 1:length(cosines_list_AL)){
+  corrplot::corrplot(cosines_list_AL[[i]],
+                   method="circle",
+                   order="original",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5,
+                   outline=FALSE,
+                   addgrid.col=NA)
+}
+```
+
+Word-sentence similarities seem to stabilize around the 7th presentation of the sentences. Now, to run the actual simulations.
+
+```{r}
+R2_full_de <- matrix(0, nrow = n_of_sim, ncol = max_sent_freq)
+
+for(i in 1:n_of_sim){
+environment_sub <- sl_create_riv(10000, length(dictionary_words), 8)
+
+R2_second <- numeric(length = max_sent_freq)
+  
+its_memory_AL <- prior_memory
+
+  for(j in 1:max_sent_freq){
+    sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids_reordered)) {
+    current_sentence <- colSums(environment_sub[sentence_ids_reordered[[k]],])
+    echo <- colSums(as.numeric(cosine_x_to_m(current_sentence, its_memory_AL) ^ 3) * (its_memory_AL))
+    echo_norm <- echo/max(abs(echo))
+    its_memory_AL <- rbind(its_memory_AL, (current_sentence - echo_norm))
+    }
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory_AL,
+                                                tau=3)
+  cosines_ITS_AL <- lsa::cosine(t(semantic_vectors))
+  R2_second[j] <- cor(c(cosines_ITS_AL),c(second_order_cosines))^2
+  }
+R2_full_de[i, ] <- R2_second
+}
+```
+
+```{r}
+
+its_memory_AL[1:10, 1:5]
+its_memory_AL[1629:1639, 1:5]
+```
+
+The MINERVA-AL discrepancy encoding code seems to be working well. The first few traces encoded have much higher values than the last few traces encoded (when each sentence had already been presented around 14 times before).
+
+### Plotting the graphs for comparison
+
+```{r}
+R2_no_de <- data.frame(l_value = c(1.0, 0.7, 0.5, 0.3), rbind(colMeans(R2_full_1.0), colMeans(R2_full_0.7), colMeans(R2_full_0.5), colMeans(R2_full_0.3))) 
+colnames(R2_no_de) <- c("l_value", 1:max_sent_freq)
+R2_no_de <- R2_no_de %>% pivot_longer(-l_value, names_to = "sent_freq", values_to = "R2_second_order")
+
+R2_de <- data.frame(sent_freq = 1:max_sent_freq, colMeans(R2_full_de))
+colnames(R2_de) <- c("sent_freq", "R2_second_order")
+```
+
+```{r}
+ggplot() + geom_line(data = R2_no_de, aes(x = factor(sent_freq, level = 1:15), y = R2_second_order, group = as.factor(l_value), color = as.factor(l_value))) + geom_line(data = R2_de, aes(x = factor(sent_freq, level = 1:15), y = R2_second_order, group = 1), linetype = "dashed")
+```
+
+Does this mean that, with discrepancy encoding, learning can never reach the same level as that without discrepancy encoding? Also, does this mean that discrepancy encoding even performs worse than no discrepancy encoding at a low learning rate (e.g. L = 0.3)?

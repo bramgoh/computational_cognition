@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.335">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Bram Goh">
+<meta name="dcterms.date" content="2023-04-07">
+
+<title>../../Computational Cognition - Exploring discrepancy encoding with ITS (Part 3)</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark ">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Computational Cognition</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html">
+ <span class="menu-text">About</span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/"><i class="bi bi-github" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://twitter.com"><i class="bi bi-twitter" role="img">
+</i> 
+ <span class="menu-text"></span></a>
+  </li>  
+</ul>
+              <div id="quarto-search" class="" title="Search"></div>
+          </div> <!-- /navcollapse -->
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Exploring discrepancy encoding with ITS (Part 3)</h1>
+                                <div class="quarto-categories">
+                <div class="quarto-category">code</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Bram Goh </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">April 7, 2023</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+<section id="using-toy-language-setup-from-sandin-et-al.s-2017" class="level1">
+<h1>Using toy language setup from Sandin et al.’s (2017)</h1>
+<p>The goal of this exercise is to use the toy language setup in Sandin et al.&nbsp;(2017) (without actually using the intricacies of random indexing) to:</p>
+<ul>
+<li>Find the number of sentences required for learning at each L to obtain echoes similar to that of L = 1.0</li>
+</ul>
+<p>most appropriate parameters (tau, L) without discrepancy encoding</p>
+<section id="matts-code" class="level2">
+<h2 class="anchored" data-anchor-id="matts-code">Matt’s code</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>✔ ggplot2 3.3.6     ✔ purrr   1.0.1
+✔ tibble  3.2.0     ✔ dplyr   1.1.0
+✔ tidyr   1.3.0     ✔ stringr 1.5.0
+✔ readr   2.1.2     ✔ forcats 0.5.1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RsemanticLibrarian)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(data.table)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'data.table'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:dplyr':
+
+    between, first, last</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:purrr':
+
+    transpose</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: NLP</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'NLP'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:ggplot2':
+
+    annotate</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>n_words_matt <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>band_width_matt <span class="ot">&lt;-</span> <span class="dv">50</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#rows are words, columns are sentences</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>band_matrix_matt <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">bandSparse</span>(<span class="at">n =</span> n_words_matt,<span class="at">k=</span><span class="dv">0</span><span class="sc">:</span>band_width_matt)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>band_matrix_matt <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(band_matrix_matt)<span class="sc">*</span><span class="dv">1</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># the following use functions from Rsemanticlibrarian</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co"># get all unique words from training text</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>dictionary_words_matt <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span>n_words_matt</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="co"># create a list of sentences by index in dictionary</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>sentence_ids_matt <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(band_matrix_matt)){</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  sentence_ids_matt[[i]] <span class="ot">&lt;-</span> <span class="fu">which</span>(band_matrix_matt[,i] <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a><span class="co">#create random environment vectors for each word in dictionary</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>environment_matt <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>,<span class="fu">length</span>(dictionary_words_matt),<span class="dv">8</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co"># make ITS sentence memory</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co"># for each sentence, sum the environment vectors for the words in the sentence</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>its_memory_matt <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">ncol=</span><span class="fu">dim</span>(environment_matt)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids_matt))</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_matt)){</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">is.null</span>(<span class="fu">nrow</span>(environment_matt[sentence_ids_matt[[i]],]))){</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    its_memory_matt[i,] <span class="ot">&lt;-</span> environment_matt[sentence_ids_matt[[i]],]</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    its_memory_matt[i,] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_matt[sentence_ids_matt[[i]],])</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>words_to_plot_matt <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>)</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a><span class="co"># function to generate echoes for a list of words</span></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>subset_semantic_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(strings,dictionary,e_vectors,sentence_memory,<span class="at">tau=</span><span class="dv">3</span>){</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>  word_meaning <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol =</span> <span class="fu">dim</span>(e_vectors)[<span class="dv">2</span>],</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>                         <span class="at">nrow =</span> <span class="fu">length</span>(strings))</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(strings)) {</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>    word_id <span class="ot">&lt;-</span> <span class="fu">which</span>(dictionary <span class="sc">%in%</span> strings[i])</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>    probe <span class="ot">&lt;-</span> e_vectors[word_id, ]</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>    activations <span class="ot">&lt;-</span> <span class="fu">cosine_x_to_m</span>(probe, sentence_memory)</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>    echo <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">as.numeric</span>(activations <span class="sc">^</span> tau) <span class="sc">*</span> (sentence_memory))</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>    word_meaning[i, ] <span class="ot">&lt;-</span> echo</span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">row.names</span>(word_meaning) <span class="ot">&lt;-</span> strings</span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(word_meaning)</span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>word_semantic_vectors_matt <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot_matt,                                                dictionary_words_matt,</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>    environment_matt,</span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>      its_memory_matt,</span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>          <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>cosine_matt <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(word_semantic_vectors_matt))</span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Ground truths to compare to: first- and second- order similarity</span></span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>first_order_cosines_matt <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(band_matrix_matt[words_to_plot_matt,]))</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>second_order_cosines_matt <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(first_order_cosines_matt))</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>matt_R2_first <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosine_matt),<span class="fu">c</span>(first_order_cosines_matt))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>matt_R2_second <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosine_matt),<span class="fu">c</span>(second_order_cosines_matt))<span class="sc">^</span><span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="making-minor-changes-and-comparing-to-matts-code" class="level2">
+<h2 class="anchored" data-anchor-id="making-minor-changes-and-comparing-to-matts-code">Making minor changes and comparing to Matt’s code</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>n_words <span class="ot">&lt;-</span> <span class="dv">130</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>band_width <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Setup of word-sentence co-occurence matrix</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>band_matrix <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">bandSparse</span>(<span class="at">n =</span> n_words,<span class="at">k=</span><span class="dv">0</span><span class="sc">:</span>(band_width<span class="dv">-1</span>))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>band_matrix <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(band_matrix)<span class="sc">*</span><span class="dv">1</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># ITS setup (each word appears in the same number of sentences)</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>dictionary_words <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span>n_words</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>sentence_ids <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(band_matrix)){</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  sentence_ids[[i]] <span class="ot">&lt;-</span> <span class="fu">which</span>(band_matrix[,i] <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>sentence_ids <span class="ot">&lt;-</span> sentence_ids[<span class="dv">11</span><span class="sc">:</span><span class="dv">119</span>]</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>environment <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>,<span class="fu">length</span>(dictionary_words),<span class="dv">8</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>words_to_plot <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">11</span><span class="sc">:</span><span class="dv">110</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ground truths to compare to: first- and second- order similarity</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>first_order_cosines <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(band_matrix[words_to_plot,]))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>second_order_cosines <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(first_order_cosines))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>prior_memory <span class="ot">&lt;-</span> <span class="fu">t</span>(<span class="fu">replicate</span>(<span class="dv">4</span>, <span class="fu">sample</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment), <span class="at">replace =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>its_memory_1 <span class="ot">&lt;-</span> <span class="fu">rbind</span>(prior_memory, <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">ncol=</span><span class="fu">dim</span>(environment)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids)))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids)){</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">is.null</span>(<span class="fu">nrow</span>(environment[sentence_ids[[i]],]))){</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    its_memory_1[<span class="dv">4</span><span class="sc">+</span>i,] <span class="ot">&lt;-</span> environment[sentence_ids[[i]],]</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    its_memory_1[<span class="dv">4</span><span class="sc">+</span>i,] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment[sentence_ids[[i]],])</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>semantic_vectors_1 <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>                                                environment,</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>                                                its_memory_1,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>cosine_1 <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors_1))</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>corrplot<span class="sc">::</span><span class="fu">corrplot</span>(cosine_1,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>                   <span class="at">method=</span><span class="st">"circle"</span>,</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>                   <span class="at">order=</span><span class="st">"original"</span>,</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.col=</span><span class="st">"black"</span>,</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.cex=</span>.<span class="dv">4</span>,</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>                   <span class="at">title=</span><span class="st">""</span>,</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>                   <span class="at">cl.cex=</span>.<span class="dv">5</span>,</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>                   <span class="at">outline=</span><span class="cn">FALSE</span>,</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>                   <span class="at">addgrid.col=</span><span class="cn">NA</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>R2_first_1 <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosine_1),<span class="fu">c</span>(first_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>R2_first_1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9425725</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>matt_R2_first</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9578603</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>R2_second_1 <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosine_1),<span class="fu">c</span>(second_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>R2_second_1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9978066</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>matt_R2_second</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.9681356</code></pre>
+</div>
+</div>
+<p>I’ve changed three things in Matt’s code: i) changing the bandwidth from 11 to 10; iii) making sure each sentence has the same number of words (i.e.&nbsp;10); ii) including prior memory (i.e.&nbsp;noise) into ITS memory. Our first-order R-squared values are similar, but my second-order R-squared is slightly higher?</p>
+</section>
+<section id="comparing-the-number-of-sentences-required-for-adequate-learning-at-different-l" class="level2">
+<h2 class="anchored" data-anchor-id="comparing-the-number-of-sentences-required-for-adequate-learning-at-different-l">Comparing the number of sentences required for adequate learning at different L</h2>
+<p>Using the R-squared between ITS and the second-order word-word similarities as the metric, we can find out, given a L value (e.g.&nbsp;L = .3, .5, .7), how many sentences a subject needs to obtain learning comparable to when L = 1.0.</p>
+<section id="no-discrepancy-encoding-l-1.0-i.e.-point-of-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="no-discrepancy-encoding-l-1.0-i.e.-point-of-comparison">No discrepancy encoding (L = 1.0, i.e.&nbsp;point of comparison)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>max_sent_freq <span class="ot">&lt;-</span> <span class="dv">15</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>n_of_sim <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co"># L = 1.0</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>R2_full_1<span class="fl">.0</span> <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> n_of_sim, <span class="at">ncol =</span> max_sent_freq)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_of_sim){</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>R2_second <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="at">length =</span> max_sent_freq)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],])</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>  cosines_ITS_1<span class="fl">.0</span> <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>  R2_second[j] <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosines_ITS_1<span class="fl">.0</span>),<span class="fu">c</span>(second_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>R2_full_1<span class="fl">.0</span>[i, ] <span class="ot">&lt;-</span> R2_second</span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="no-discrepancy-encoding-l-.3" class="level3">
+<h3 class="anchored" data-anchor-id="no-discrepancy-encoding-l-.3">No discrepancy encoding (L = .3)</h3>
+<p>First, let’s visualize how the word-sentence similarities change as sentences are presented with higher frequency.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>cosines_list_0<span class="fl">.3</span> <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],]) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment_sub), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> .<span class="dv">3</span>, .<span class="dv">3</span>))</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  cosines_list_0<span class="fl">.3</span>[[j]] <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(cosines_list_0<span class="fl">.3</span>)){</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  corrplot<span class="sc">::</span><span class="fu">corrplot</span>(cosines_list_0<span class="fl">.3</span>[[i]],</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">method=</span><span class="st">"circle"</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">order=</span><span class="st">"original"</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.col=</span><span class="st">"black"</span>,</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.cex=</span>.<span class="dv">4</span>,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">title=</span><span class="st">""</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">cl.cex=</span>.<span class="dv">5</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">outline=</span><span class="cn">FALSE</span>,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">addgrid.col=</span><span class="cn">NA</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-10.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-11.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-12.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-13.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-14.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-8-15.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Now, for the actual simulations.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>R2_full_0<span class="fl">.3</span> <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> n_of_sim, <span class="at">ncol =</span> max_sent_freq)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_of_sim){</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>R2_second <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="at">length =</span> max_sent_freq)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],]) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment_sub), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> .<span class="dv">3</span>, .<span class="dv">3</span>))</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>  cosines_ITS_0<span class="fl">.3</span> <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>  R2_second[j] <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosines_ITS_0<span class="fl">.3</span>),<span class="fu">c</span>(second_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>R2_full_0<span class="fl">.3</span>[i, ] <span class="ot">&lt;-</span> R2_second</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="no-discrepancy-encoding-l-.5" class="level3">
+<h3 class="anchored" data-anchor-id="no-discrepancy-encoding-l-.5">No discrepancy encoding (L = .5)</h3>
+<p>Visualizing the word-sentence similarities with increasing sentence frequency:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>cosines_list_0<span class="fl">.5</span> <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],]) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment_sub), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> .<span class="dv">5</span>, .<span class="dv">5</span>))</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  cosines_list_0<span class="fl">.5</span>[[j]] <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(cosines_list_0<span class="fl">.5</span>)){</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  corrplot<span class="sc">::</span><span class="fu">corrplot</span>(cosines_list_0<span class="fl">.5</span>[[i]],</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">method=</span><span class="st">"circle"</span>,</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">order=</span><span class="st">"original"</span>,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.col=</span><span class="st">"black"</span>,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.cex=</span>.<span class="dv">4</span>,</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">title=</span><span class="st">""</span>,</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">cl.cex=</span>.<span class="dv">5</span>,</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">outline=</span><span class="cn">FALSE</span>,</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">addgrid.col=</span><span class="cn">NA</span>)</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-10.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-11.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-12.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-13.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-14.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-11-15.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Actual simulation:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>R2_full_0<span class="fl">.5</span> <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> n_of_sim, <span class="at">ncol =</span> max_sent_freq)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_of_sim){</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>R2_second <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="at">length =</span> max_sent_freq)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],]) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment_sub), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> .<span class="dv">5</span>, .<span class="dv">5</span>))</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>  cosines_ITS_0<span class="fl">.5</span> <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>  R2_second[j] <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosines_ITS_0<span class="fl">.5</span>),<span class="fu">c</span>(second_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>R2_full_0<span class="fl">.5</span>[i, ] <span class="ot">&lt;-</span> R2_second</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="no-discrepancy-encoding-l-.7" class="level3">
+<h3 class="anchored" data-anchor-id="no-discrepancy-encoding-l-.7">No discrepancy encoding (L = .7)</h3>
+<p>Visualizing word-sentence similarities with increasing sentence frequency:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>cosines_list_0<span class="fl">.7</span> <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],]) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment_sub), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> .<span class="dv">7</span>, .<span class="dv">7</span>))</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  cosines_list_0<span class="fl">.7</span>[[j]] <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(cosines_list_0<span class="fl">.7</span>)){</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  corrplot<span class="sc">::</span><span class="fu">corrplot</span>(cosines_list_0<span class="fl">.7</span>[[i]],</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">method=</span><span class="st">"circle"</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">order=</span><span class="st">"original"</span>,</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.col=</span><span class="st">"black"</span>,</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.cex=</span>.<span class="dv">4</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">title=</span><span class="st">""</span>,</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">cl.cex=</span>.<span class="dv">5</span>,</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">outline=</span><span class="cn">FALSE</span>,</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">addgrid.col=</span><span class="cn">NA</span>)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-10.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-11.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-12.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-13.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-14.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-14-15.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Actual simulation:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>R2_full_0<span class="fl">.7</span> <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> n_of_sim, <span class="at">ncol =</span> max_sent_freq)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_of_sim){</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>R2_second <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="at">length =</span> max_sent_freq)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>its_memory <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">ncol=</span><span class="fu">dim</span>(environment_sub)[<span class="dv">2</span>],<span class="at">nrow=</span><span class="fu">length</span>(sentence_ids))</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    its_memory_chunk[k, ] <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],]) <span class="sc">*</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">1</span>), <span class="fu">ncol</span>(environment_sub), <span class="at">replace =</span> <span class="cn">TRUE</span>, <span class="at">prob =</span> <span class="fu">c</span>(<span class="dv">1</span> <span class="sc">-</span> .<span class="dv">7</span>, .<span class="dv">7</span>))</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    its_memory <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory, its_memory_chunk)</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>                                                its_memory,</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>  cosines_ITS_0<span class="fl">.7</span> <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>  R2_second[j] <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosines_ITS_0<span class="fl">.7</span>),<span class="fu">c</span>(second_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>R2_full_0<span class="fl">.7</span>[i, ] <span class="ot">&lt;-</span> R2_second</span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="minerva-al-discrepancy-encoding-l-1.0" class="level3">
+<h3 class="anchored" data-anchor-id="minerva-al-discrepancy-encoding-l-1.0">MINERVA-AL discrepancy encoding (L = 1.0)</h3>
+<p>Let’s visualize the progression of ITS encoding by visualizing the word-sentence similarities.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>cosines_list_AL <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>its_memory_AL <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    current_sentence <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],])</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>    echo <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">as.numeric</span>(<span class="fu">cosine_x_to_m</span>(current_sentence, its_memory_AL) <span class="sc">^</span> <span class="dv">3</span>) <span class="sc">*</span> (its_memory_AL))</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    echo_norm <span class="ot">&lt;-</span> echo<span class="sc">/</span><span class="fu">max</span>(<span class="fu">abs</span>(echo))</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    its_memory_AL <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory_AL, (current_sentence <span class="sc">-</span> echo_norm))</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>                                                its_memory_AL,</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>  cosines_list_AL[[j]] <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(cosines_list_AL)){</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  corrplot<span class="sc">::</span><span class="fu">corrplot</span>(cosines_list_AL[[i]],</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">method=</span><span class="st">"circle"</span>,</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">order=</span><span class="st">"original"</span>,</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.col=</span><span class="st">"black"</span>,</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">tl.cex=</span>.<span class="dv">4</span>,</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">title=</span><span class="st">""</span>,</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>                   <span class="at">cl.cex=</span>.<span class="dv">5</span>,</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">outline=</span><span class="cn">FALSE</span>,</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">addgrid.col=</span><span class="cn">NA</span>)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-5.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-6.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-7.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-8.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-9.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-10.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-11.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-12.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-13.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-14.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-17-15.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Word-sentence similarities seem to stabilize around the 7th presentation of the sentences. Now, to run the actual simulations.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>R2_full_de <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> n_of_sim, <span class="at">ncol =</span> max_sent_freq)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>n_of_sim){</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>environment_sub <span class="ot">&lt;-</span> <span class="fu">sl_create_riv</span>(<span class="dv">10000</span>, <span class="fu">length</span>(dictionary_words), <span class="dv">8</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>R2_second <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="at">length =</span> max_sent_freq)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>its_memory_AL <span class="ot">&lt;-</span> prior_memory</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq){</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>    sentence_ids_reordered <span class="ot">&lt;-</span> <span class="fu">sample</span>(sentence_ids)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(k <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(sentence_ids_reordered)) {</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    current_sentence <span class="ot">&lt;-</span> <span class="fu">colSums</span>(environment_sub[sentence_ids_reordered[[k]],])</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>    echo <span class="ot">&lt;-</span> <span class="fu">colSums</span>(<span class="fu">as.numeric</span>(<span class="fu">cosine_x_to_m</span>(current_sentence, its_memory_AL) <span class="sc">^</span> <span class="dv">3</span>) <span class="sc">*</span> (its_memory_AL))</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    echo_norm <span class="ot">&lt;-</span> echo<span class="sc">/</span><span class="fu">max</span>(<span class="fu">abs</span>(echo))</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>    its_memory_AL <span class="ot">&lt;-</span> <span class="fu">rbind</span>(its_memory_AL, (current_sentence <span class="sc">-</span> echo_norm))</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>  semantic_vectors <span class="ot">&lt;-</span> <span class="fu">subset_semantic_vectors</span>(words_to_plot,</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>                                                dictionary_words,</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>                                                environment_sub,</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>                                                its_memory_AL,</span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">tau=</span><span class="dv">3</span>)</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>  cosines_ITS_AL <span class="ot">&lt;-</span> lsa<span class="sc">::</span><span class="fu">cosine</span>(<span class="fu">t</span>(semantic_vectors))</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>  R2_second[j] <span class="ot">&lt;-</span> <span class="fu">cor</span>(<span class="fu">c</span>(cosines_ITS_AL),<span class="fu">c</span>(second_order_cosines))<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>R2_full_de[i, ] <span class="ot">&lt;-</span> R2_second</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>its_memory_AL[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            [,1]       [,2]        [,3]       [,4]       [,5]
+ [1,]  0.0000000 -1.0000000  1.00000000  1.0000000  0.0000000
+ [2,] -1.0000000 -1.0000000 -1.00000000  1.0000000  1.0000000
+ [3,] -1.0000000 -1.0000000  1.00000000  0.0000000 -1.0000000
+ [4,]  1.0000000  1.0000000 -1.00000000  1.0000000 -1.0000000
+ [5,] -0.9977807 -1.0000000  0.58611904  0.2091598 -0.5838998
+ [6,]  0.6407729  0.3494726  0.02382425  0.4831534 -0.4895270
+ [7,]  0.2735105  0.4661442 -0.99262772  0.6106153 -0.2800206
+ [8,] -0.6453965 -0.5849472  0.54819815 -0.6710448  0.6492927
+ [9,]  0.3771347  0.2623084 -0.59621311  0.2836291  0.7073388
+[10,] -0.1322865 -0.2228952  0.47443002 -0.2947606  0.1353827</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>its_memory_AL[<span class="dv">1629</span><span class="sc">:</span><span class="dv">1639</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               [,1]          [,2]          [,3]          [,4]          [,5]
+ [1,] -1.264035e-04 -3.462184e-05  1.011630e-04 -1.083267e-04 -2.263957e-04
+ [2,]  3.710836e-05  2.076570e-05 -2.219678e-06  3.243088e-05 -3.216009e-05
+ [3,]  1.062101e-05  3.316479e-05 -1.720831e-05 -2.593322e-05 -1.451305e-05
+ [4,]  2.593332e-04  1.438617e-04  7.729729e-07  1.967663e-04 -1.925258e-04
+ [5,] -8.150816e-05 -6.375385e-05  2.501117e-05 -2.393398e-05  8.336514e-06
+ [6,]  5.451425e-05  3.212950e-05 -6.159582e-06  4.448722e-05 -4.163051e-05
+ [7,]  4.718266e-04  5.000087e-04 -3.298992e-04 -1.171870e-04  3.096171e-04
+ [8,] -1.563369e-04 -1.373852e-04  7.035068e-05 -1.849167e-05 -2.318766e-05
+ [9,]  9.120338e-06  3.859228e-05  2.639440e-05 -6.061685e-05 -5.856319e-05
+[10,]  1.778721e-05  3.230424e-05  2.561530e-06 -3.144276e-05 -1.809289e-05
+[11,]  2.849881e-04  1.335925e-04  9.879837e-05  1.526164e-04 -1.822352e-04</code></pre>
+</div>
+</div>
+<p>The MINERVA-AL discrepancy encoding code seems to be working well. The first few traces encoded have much higher values than the last few traces encoded (when each sentence had already been presented around 14 times before).</p>
+</section>
+<section id="plotting-the-graphs-for-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="plotting-the-graphs-for-comparison">Plotting the graphs for comparison</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>R2_no_de <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">l_value =</span> <span class="fu">c</span>(<span class="fl">1.0</span>, <span class="fl">0.7</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>), <span class="fu">rbind</span>(<span class="fu">colMeans</span>(R2_full_1<span class="fl">.0</span>), <span class="fu">colMeans</span>(R2_full_0<span class="fl">.7</span>), <span class="fu">colMeans</span>(R2_full_0<span class="fl">.5</span>), <span class="fu">colMeans</span>(R2_full_0<span class="fl">.3</span>))) </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(R2_no_de) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"l_value"</span>, <span class="dv">1</span><span class="sc">:</span>max_sent_freq)</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>R2_no_de <span class="ot">&lt;-</span> R2_no_de <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="sc">-</span>l_value, <span class="at">names_to =</span> <span class="st">"sent_freq"</span>, <span class="at">values_to =</span> <span class="st">"R2_second_order"</span>)</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>R2_de <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">sent_freq =</span> <span class="dv">1</span><span class="sc">:</span>max_sent_freq, <span class="fu">colMeans</span>(R2_full_de))</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(R2_de) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"sent_freq"</span>, <span class="st">"R2_second_order"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>() <span class="sc">+</span> <span class="fu">geom_line</span>(<span class="at">data =</span> R2_no_de, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(sent_freq, <span class="at">level =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">15</span>), <span class="at">y =</span> R2_second_order, <span class="at">group =</span> <span class="fu">as.factor</span>(l_value), <span class="at">color =</span> <span class="fu">as.factor</span>(l_value))) <span class="sc">+</span> <span class="fu">geom_line</span>(<span class="at">data =</span> R2_de, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(sent_freq, <span class="at">level =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">15</span>), <span class="at">y =</span> R2_second_order, <span class="at">group =</span> <span class="dv">1</span>), <span class="at">linetype =</span> <span class="st">"dashed"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Does this mean that, with discrepancy encoding, learning can never reach the same level as that without discrepancy encoding? Also, does this mean that discrepancy encoding even performs worse than no discrepancy encoding at a low learning rate (e.g.&nbsp;L = 0.3)?</p>
+
+
+</section>
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

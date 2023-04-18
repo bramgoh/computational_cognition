@@ -227,12 +227,12 @@ for(i in 1:length(reordered_sentences)){
 ```{r}
 
 n_of_sim <- 100 
-full_subjects_df <- data.frame()
+full_subjects_df <- data.frame(trial_no = 1:(n_of_sim*length(word_subset)), subject = NA, word = NA, intensity = NA) %>% select(-trial_no)
 
 for(i in 1:n_of_sim){
   current_sub <- sim_intensity_once_no_de(word_subset, dictionary, 5000, 4, word_ids, tau = 3)
   current_sub$subject <- i
-  full_subjects_df <- bind_rows(full_subjects_df, current_sub)
+  full_subjects_df[((i - 1) * length(word_subset) + 1):(i * length(word_subset)), ] <- current_sub
 }
 ```
 
@@ -293,6 +293,8 @@ ggplot(mds_AL_de, aes(x = Dim1, y = Dim2, label = word_subset)) + geom_text() + 
 At least the clusters are still somewhat distinguishable, although this could also be because there are only 2 clusters.
 
 ```{r}
+n_of_sim_AL <- 50
+
 # Use MINERVA-AL discrepancy encoding: Function to calculate intensity for one participant (modified from Matt's)
 
 sim_intensity_once_AL_de <- function(strings, dict, vector_length, sparsity, sentence_with_ids, tau = 3) {
@@ -323,12 +325,12 @@ for(i in 1:length(reordered_sentences)){
   return(trial_df)
 }
 
-full_subjects_df_AL <- data.frame()
+full_subjects_df_AL <- data.frame(trial_no = 1:(n_of_sim_AL*length(word_subset)), subject = NA, word = NA, intensity = NA) %>% select(-trial_no)
 
-for(i in 1:50){
+for(i in 1:n_of_sim_AL){
   current_sub <- sim_intensity_once_AL_de(word_subset, dictionary, 5000, 4, word_ids, tau = 3)
   current_sub$subject <- i
-  full_subjects_df_AL <- bind_rows(full_subjects_df_AL, current_sub)
+  full_subjects_df_AL[((i - 1) * length(word_subset) + 1):(i * length(word_subset)), ] <- current_sub
 }
 ```
 
@@ -386,6 +388,8 @@ ggplot(mds_collins_de, aes(x = Dim1, y = Dim2, label = word_subset)) + geom_text
 Discernible clusters, though this could once again be because there are only 2 clusters to differentiate.
 
 ```{r}
+n_of_sim_collins <- 100
+
 # Use Collins et al. (2020) discrepancy encoding: Function to calculate intensity for one participant (modified from Matt's)
 
 sim_intensity_once_collins <- function(strings, dict, vector_length, sparsity, sentence_with_ids, tau = 3) {
@@ -416,12 +420,12 @@ for(i in 1:length(reordered_sentences)){
   return(trial_df)
 }
 
-full_subjects_df_collins <- data.frame()
+full_subjects_df_collins <- data.frame(trial_no = 1:(n_of_sim_collins*length(word_subset)), subject = NA, word = NA, intensity = NA) %>% select(-trial_no)
 
-for(i in 1:100){
+for(i in 1:n_of_sim_collins){
   current_sub <- sim_intensity_once_collins(word_subset, dictionary, 5000, 4, word_ids, tau = 3)
   current_sub$subject <- i
-  full_subjects_df_collins <- bind_rows(full_subjects_df_collins, current_sub)
+  full_subjects_df_collins[((i - 1) * length(word_subset) + 1):(i * length(word_subset)), ] <- current_sub
 }
 ```
 
