@@ -330,6 +330,12 @@ ggplot(intensities_sliver, aes(x = sentence, y = intensities, group = sent_freq,
 
 Not really sure what to make of the peaks and valleys across the sentences, but at least intensity increases with sentence frequency, which is what we expect.
 
+```{r}
+norm_echo_df <- data.frame(sentence_no = 1:(max_sent_freq*length(sentence_ids)), full_norm_echoes)
+norm_echo_sliver <- norm_echo_df %>% pivot_longer(-sentence_no, names_to = "column", names_prefix = "X", names_transform = list(column = as.numeric), values_to = "echo_value") %>% filter(sentence_no %in% 1:2) %>% filter(column %in% 110:130)
+ggplot(norm_echo_sliver, aes(x = column, y = echo_value, group = as.factor(sentence_no), color = as.factor(sentence_no))) + geom_line()
+```
+
 Now let's see the similarities when the sentences are randomly reordered every time they are presented.
 
 ```{r}
