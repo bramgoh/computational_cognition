@@ -330,14 +330,126 @@ ggplot(compare_df_0.7, aes(x = sent_freq, y = intensity, color = condition)) + g
 ggplot(compare_df_0.7, aes(x = sent_freq, y = R_squared, color = order_of_sim)) + geom_line() + facet_wrap(vars(condition))
 ```
 
+## Applying learning rate of .4
+
+### No discrepancy encoding
+
+```{r}
+L <- .4
+
+R2_zero_0.4 <- numeric(length = max_sent_freq)
+R2_first_0.4 <- numeric(length = max_sent_freq)
+R2_second_0.4 <- numeric(length = max_sent_freq)
+
+its_memory <- prior_memory
+
+intensities_matrix_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+  for(j in 1:max_sent_freq){
+    print(j)
+    intensities <- numeric(length = length(sentence_ids))
+    reconstruction <- numeric(length = length(sentence_ids))
+    sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- rectify_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    activations <- cosine_x_to_m(current_sentence, its_memory)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    its_memory <- rbind(its_memory, (current_sentence*(rbinom(length(current_sentence), 1, L))))
+    }
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_0.4 <- lsa::cosine(t(semantic_vectors))
+  R2_zero_0.4[j] <- cor(c(cosines_ITS_0.4),c(zero_order_cosines))^2
+  R2_first_0.4[j] <- cor(c(cosines_ITS_0.4),c(first_order_cosines))^2
+  R2_second_0.4[j] <- cor(c(cosines_ITS_0.4),c(second_order_cosines))^2
+  intensities_matrix_0.4[j, ] <- intensities
+  reconst_matrix_0.4[j, ] <- reconstruction
+}
+```
+
+### MINERVA-AL discrepancy encoding
+
+```{r}
+R2_zero_AL_0.4 <- numeric(length = max_sent_freq)
+R2_first_AL_0.4 <- numeric(length = max_sent_freq)
+R2_second_AL_0.4 <- numeric(length = max_sent_freq)
+
+sentence_matrix_0.4 <- c()
+
+norm_echoes_matrix_0.4 <- c()
+
+intensities_matrix_AL_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_AL_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+  
+its_memory_AL_0.4 <- prior_memory
+
+for(j in 1:max_sent_freq){
+  print(j)
+  intensities <- numeric(length = length(sentence_ids))
+  reconstruction <- numeric(length = length(sentence_ids))
+  sentences <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  normalized_echoes <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- rectify_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    sentences[k, ] <- current_sentence
+    activations <- cosine_x_to_m(current_sentence, its_memory_AL_0.4)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory_AL_0.4))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    echo_norm <- rectify_vector(echo)
+    normalized_echoes[k, ] <- echo_norm
+    its_memory_AL_0.4 <- rbind(its_memory_AL_0.4, ((current_sentence - echo_norm)*(rbinom(length(current_sentence), 1, L))))
+    }
+  sentence_matrix_0.4 <- rbind(sentence_matrix_0.4, sentences)
+  norm_echoes_matrix_0.4 <- rbind(norm_echoes_matrix_0.4, normalized_echoes)
+  intensities_matrix_AL_0.4[j, ] <- intensities
+  reconst_matrix_AL_0.4[j, ] <- reconstruction
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory_AL_0.4,
+                                                tau=3)
+  cosines_AL_0.4 <- lsa::cosine(t(semantic_vectors))
+  R2_zero_AL_0.4[j] <- cor(c(cosines_AL_0.4),c(zero_order_cosines))^2
+  R2_first_AL_0.4[j] <- cor(c(cosines_AL_0.4),c(first_order_cosines))^2
+  R2_second_AL_0.4[j] <- cor(c(cosines_AL_0.4),c(second_order_cosines))^2
+}
+```
+
+### Comparing no discrepancy encoding to discrepancy encoding
+
+```{r}
+no_de_df_0.4 <- data.frame(learning_rate = "0.4", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix_0.4), rowMeans(intensities_matrix_0.4), R2_zero_0.4, R2_first_0.4, R2_second_0.4)
+colnames(no_de_df_0.4) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+no_de_df_0.4 <- no_de_df_0.4 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+de_df_0.4 <- data.frame(learning_rate = "0.4", condition = "de", sent_freq = 1:10, rowMeans(reconst_matrix_AL_0.4), rowMeans(intensities_matrix_AL_0.4), R2_zero_AL_0.4, R2_first_AL_0.4, R2_second_AL_0.4)
+colnames(de_df_0.4) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+de_df_0.4 <- de_df_0.4 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+compare_df_0.4 <- bind_rows(no_de_df_0.4, de_df_0.4)
+ggplot(compare_df_0.4, aes(x = sent_freq, y = reconstruction, color = condition)) + geom_line()
+ggplot(compare_df_0.4, aes(x = sent_freq, y = intensity, color = condition)) + geom_line()
+ggplot(compare_df_0.4, aes(x = sent_freq, y = R_squared, color = order_of_sim)) + geom_line() + facet_wrap(vars(condition))
+```
+
 ## In summary...
 
 ```{r}
-complete_df <- bind_rows(compare_df_perfect, compare_df_0.7)
-complete_df$learning_rate <- factor(complete_df$learning_rate, levels = c("1.0", "0.7"))
-ggplot(complete_df, aes(x = sent_freq, y = reconstruction, color = condition, linetype = learning_rate)) + geom_line()
-ggplot(complete_df, aes(x = sent_freq, y = intensity, color = condition, linetype = learning_rate)) + geom_line()
-ggplot(complete_df, aes(x = sent_freq, y = R_squared, color = order_of_sim, linetype = learning_rate)) + geom_line() + facet_wrap(vars(condition))
+complete_df <- bind_rows(compare_df_perfect, compare_df_0.7, compare_df_0.4)
+complete_df$learning_rate <- factor(complete_df$learning_rate, levels = c("1.0", "0.7", "0.4"))
+ggplot(complete_df, aes(x = sent_freq, y = reconstruction, color = learning_rate)) + geom_line() + facet_wrap(vars(condition))
+ggplot(complete_df, aes(x = sent_freq, y = intensity, color = learning_rate)) + geom_line() + facet_wrap(vars(condition))
+ggplot(complete_df, aes(x = sent_freq, y = R_squared, color = order_of_sim, linetype = condition)) + geom_line() + facet_wrap(vars(learning_rate))
 ```
 
 The zero-order correlations have a negative, almost mirror-like relationship with the first- and second-order correlations. This seems different from the almost-parallel curves we were getting with one-hot encoding?
