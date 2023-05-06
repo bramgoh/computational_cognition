@@ -14,6 +14,8 @@ Thus, it could be that ITS vanilla models pattern completion processes, while IT
 
 This week, I will replace the one-hot encoding with RIVs to confirm whether the above results are an artifact of the one-hot encoding procedure or whether there really is something here. Also, I will examine the zero-order correlations (correlation between semantic vector and actual word environmental vector). Additionally, I will randomize the order of the sentences presented.
 
+Most importantly, I will be comparing the rectifying versus normalization procedures for both the target sentence and the echo. In previous simulations, we have chosen to rectify the target sentence and normalize the echo, but perhaps a consistent approach to both sentence and echo is more defensible?
+
 ## Setup
 
 ```{r}
@@ -87,20 +89,20 @@ norm_vector <- function(x){
 first_order_cosines <- cosine(t(band_matrix[words_to_plot,]))
 second_order_cosines <- cosine(t(first_order_cosines))
 
+environment_sub <- sl_create_riv(1500, length(dictionary_words), 10)
+zero_order_cosines <- cosine(t(environment_sub[words_to_plot, ]))
+
 max_sent_freq <- 10
 ```
 
-## No learning rate applied (L = 1.0)
+## Rectifying procedure
 
-### No discrepancy encoding
+### No discrepancy encoding (L = 1.0)
 
 ```{r}
 R2_zero <- numeric(length = max_sent_freq)
 R2_first <- numeric(length = max_sent_freq)
 R2_second <- numeric(length = max_sent_freq)
-
-environment_sub <- sl_create_riv(1500, length(dictionary_words), 10)
-zero_order_cosines <- cosine(t(environment_sub[words_to_plot, ]))
 
 prior_memory <- t(replicate(100, sample(c(-1,0,1), ncol(environment_sub), replace = TRUE)))
 its_memory <- prior_memory
@@ -136,7 +138,7 @@ reconst_matrix <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
 }
 ```
 
-### MINERVA-AL discrepancy encoding
+### MINERVA-AL discrepancy encoding (L = 1.0)
 
 ```{r}
 cosines_list_AL <- list()
@@ -201,8 +203,6 @@ corrplot::corrplot(cosines_list_AL[[10]],
                    addgrid.col=NA)
 ```
 
-### Comparing no discrepancy encoding to discrepancy encoding
-
 ```{r}
 no_de_df_perfect <- data.frame(learning_rate = "1.0", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix), rowMeans(intensities_matrix), R2_zero, R2_first, R2_second)
 colnames(no_de_df_perfect) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
@@ -213,14 +213,9 @@ colnames(de_df_perfect) <- c("learning_rate", "condition", "sent_freq", "reconst
 de_df_perfect <- de_df_perfect %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
 
 compare_df_perfect <- bind_rows(no_de_df_perfect, de_df_perfect)
-ggplot(compare_df_perfect, aes(x = sent_freq, y = reconstruction, color = condition)) + geom_line()
-ggplot(compare_df_perfect, aes(x = sent_freq, y = intensity, color = condition)) + geom_line()
-ggplot(compare_df_perfect, aes(x = sent_freq, y = R_squared, color = order_of_sim)) + geom_line() + facet_wrap(vars(condition))
 ```
 
-## Applying learning rate of .7
-
-### No discrepancy encoding
+### No discrepancy encoding (L = 0.7)
 
 ```{r}
 L <- .7
@@ -262,7 +257,7 @@ reconst_matrix_0.7 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids
 }
 ```
 
-### MINERVA-AL discrepancy encoding
+### MINERVA-AL discrepancy encoding (L = 0.7)
 
 ```{r}
 R2_zero_AL_0.7 <- numeric(length = max_sent_freq)
@@ -313,8 +308,6 @@ for(j in 1:max_sent_freq){
 }
 ```
 
-### Comparing no discrepancy encoding to discrepancy encoding
-
 ```{r}
 no_de_df_0.7 <- data.frame(learning_rate = "0.7", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix_0.7), rowMeans(intensities_matrix_0.7), R2_zero_0.7, R2_first_0.7, R2_second_0.7)
 colnames(no_de_df_0.7) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
@@ -325,14 +318,9 @@ colnames(de_df_0.7) <- c("learning_rate", "condition", "sent_freq", "reconstruct
 de_df_0.7 <- de_df_0.7 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
 
 compare_df_0.7 <- bind_rows(no_de_df_0.7, de_df_0.7)
-ggplot(compare_df_0.7, aes(x = sent_freq, y = reconstruction, color = condition)) + geom_line()
-ggplot(compare_df_0.7, aes(x = sent_freq, y = intensity, color = condition)) + geom_line()
-ggplot(compare_df_0.7, aes(x = sent_freq, y = R_squared, color = order_of_sim)) + geom_line() + facet_wrap(vars(condition))
 ```
 
-## Applying learning rate of .4
-
-### No discrepancy encoding
+### No discrepancy encoding (L = 0.4)
 
 ```{r}
 L <- .4
@@ -374,7 +362,7 @@ reconst_matrix_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids
 }
 ```
 
-### MINERVA-AL discrepancy encoding
+### MINERVA-AL discrepancy encoding (L = 0.4)
 
 ```{r}
 R2_zero_AL_0.4 <- numeric(length = max_sent_freq)
@@ -425,7 +413,353 @@ for(j in 1:max_sent_freq){
 }
 ```
 
-### Comparing no discrepancy encoding to discrepancy encoding
+```{r}
+no_de_df_0.4 <- data.frame(learning_rate = "0.4", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix_0.4), rowMeans(intensities_matrix_0.4), R2_zero_0.4, R2_first_0.4, R2_second_0.4)
+colnames(no_de_df_0.4) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+no_de_df_0.4 <- no_de_df_0.4 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+de_df_0.4 <- data.frame(learning_rate = "0.4", condition = "de", sent_freq = 1:10, rowMeans(reconst_matrix_AL_0.4), rowMeans(intensities_matrix_AL_0.4), R2_zero_AL_0.4, R2_first_AL_0.4, R2_second_AL_0.4)
+colnames(de_df_0.4) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+de_df_0.4 <- de_df_0.4 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+compare_df_0.4 <- bind_rows(no_de_df_0.4, de_df_0.4)
+```
+
+### Summary for rectifying procedure
+
+```{r}
+complete_df <- bind_rows(compare_df_perfect, compare_df_0.7, compare_df_0.4)
+complete_df$learning_rate <- factor(complete_df$learning_rate, levels = c("1.0", "0.7", "0.4"))
+ggplot(complete_df, aes(x = sent_freq, y = reconstruction, color = learning_rate)) + geom_line() + facet_wrap(vars(condition))
+ggplot(complete_df, aes(x = sent_freq, y = intensity, color = learning_rate)) + geom_line() + facet_wrap(vars(condition))
+ggplot(complete_df, aes(x = sent_freq, y = R_squared, color = order_of_sim, linetype = condition)) + geom_line() + facet_wrap(vars(learning_rate))
+```
+
+Reordering the sentences leads to lower zero-order correlations in ITS-DE.
+
+With ITS-DE, the intensity values seem to plateau (and even start to dip with increasing frequency of presentation) when L = 1, and as L decreases the rate of increase grows.
+
+The zero-order correlations have a negative, almost mirror-like relationship with the first- and second-order correlations. This seems different from the almost-parallel curves we were getting before. Is this due to removing the one-hot encoding procedure or due to rectifying both sentence and echo?
+
+## Normalization procedure
+
+### No discrepancy encoding (L = 1.0)
+
+```{r}
+R2_zero <- numeric(length = max_sent_freq)
+R2_first <- numeric(length = max_sent_freq)
+R2_second <- numeric(length = max_sent_freq)
+
+prior_memory <- t(replicate(100, sample(c(-1,0,1), ncol(environment_sub), replace = TRUE)))
+its_memory <- prior_memory
+
+intensities_matrix <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+  for(j in 1:max_sent_freq){
+    print(j)
+    intensities <- numeric(length = length(sentence_ids))
+    reconstruction <- numeric(length = length(sentence_ids))
+    sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- norm_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    activations <- cosine_x_to_m(current_sentence, its_memory)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    its_memory <- rbind(its_memory, current_sentence)
+    }
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS <- lsa::cosine(t(semantic_vectors))
+  R2_zero[j] <- cor(c(cosines_ITS), c(zero_order_cosines))^2
+  R2_first[j] <- cor(c(cosines_ITS),c(first_order_cosines))^2
+  R2_second[j] <- cor(c(cosines_ITS),c(second_order_cosines))^2
+  intensities_matrix[j, ] <- intensities
+  reconst_matrix[j, ] <- reconstruction
+}
+```
+
+### MINERVA-AL discrepancy encoding (L = 1.0)
+
+```{r}
+cosines_list_AL <- list()
+
+R2_zero_AL <- numeric(length = max_sent_freq)
+R2_first_AL <- numeric(length = max_sent_freq)
+R2_second_AL <- numeric(length = max_sent_freq)
+
+sentence_matrix <- c()
+
+norm_echoes_matrix <- c()
+
+intensities_matrix_AL <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_AL <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+  
+its_memory_AL <- prior_memory
+
+for(j in 1:max_sent_freq){
+  print(j)
+  intensities <- numeric(length = length(sentence_ids))
+  reconstruction <- numeric(length = length(sentence_ids))
+  sentences <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  normalized_echoes <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- norm_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    sentences[k, ] <- current_sentence
+    activations <- cosine_x_to_m(current_sentence, its_memory_AL)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory_AL))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    echo_norm <- norm_vector(echo)
+    normalized_echoes[k, ] <- echo_norm
+    its_memory_AL <- rbind(its_memory_AL, (current_sentence - echo_norm))
+    }
+  sentence_matrix <- rbind(sentence_matrix, sentences)
+  norm_echoes_matrix <- rbind(norm_echoes_matrix, normalized_echoes)
+  intensities_matrix_AL[j, ] <- intensities
+  reconst_matrix_AL[j, ] <- reconstruction
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory_AL,
+                                                tau=3)
+  cosines_list_AL[[j]] <- lsa::cosine(t(semantic_vectors))
+  R2_zero_AL[j] <- cor(c(cosines_list_AL[[j]]),c(zero_order_cosines))^2
+  R2_first_AL[j] <- cor(c(cosines_list_AL[[j]]),c(first_order_cosines))^2
+  R2_second_AL[j] <- cor(c(cosines_list_AL[[j]]),c(second_order_cosines))^2
+}
+```
+
+```{r}
+corrplot::corrplot(cosines_list_AL[[10]],
+                   method="circle",
+                   order="original",
+                   tl.col="black",
+                   tl.cex=.4,
+                   title="",
+                   cl.cex=.5,
+                   outline=FALSE,
+                   addgrid.col=NA)
+```
+
+This is quite different from what we were getting with the rectifying procedure.
+
+```{r}
+no_de_df_perfect <- data.frame(learning_rate = "1.0", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix), rowMeans(intensities_matrix), R2_zero, R2_first, R2_second)
+colnames(no_de_df_perfect) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+no_de_df_perfect <- no_de_df_perfect %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+de_df_perfect <- data.frame(learning_rate = "1.0", condition = "de", sent_freq = 1:10, rowMeans(reconst_matrix_AL), rowMeans(intensities_matrix_AL), R2_zero_AL, R2_first_AL, R2_second_AL)
+colnames(de_df_perfect) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+de_df_perfect <- de_df_perfect %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+compare_df_perfect <- bind_rows(no_de_df_perfect, de_df_perfect)
+```
+
+### No discrepancy encoding (L = 0.7)
+
+```{r}
+L <- .7
+
+R2_zero_0.7 <- numeric(length = max_sent_freq)
+R2_first_0.7 <- numeric(length = max_sent_freq)
+R2_second_0.7 <- numeric(length = max_sent_freq)
+
+its_memory <- prior_memory
+
+intensities_matrix_0.7 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_0.7 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+  for(j in 1:max_sent_freq){
+    print(j)
+    intensities <- numeric(length = length(sentence_ids))
+    reconstruction <- numeric(length = length(sentence_ids))
+    sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- norm_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    activations <- cosine_x_to_m(current_sentence, its_memory)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    its_memory <- rbind(its_memory, (current_sentence*(rbinom(length(current_sentence), 1, L))))
+    }
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_0.7 <- lsa::cosine(t(semantic_vectors))
+  R2_zero_0.7[j] <- cor(c(cosines_ITS_0.7),c(zero_order_cosines))^2
+  R2_first_0.7[j] <- cor(c(cosines_ITS_0.7),c(first_order_cosines))^2
+  R2_second_0.7[j] <- cor(c(cosines_ITS_0.7),c(second_order_cosines))^2
+  intensities_matrix_0.7[j, ] <- intensities
+  reconst_matrix_0.7[j, ] <- reconstruction
+}
+```
+
+### MINERVA-AL discrepancy encoding (L = 0.7)
+
+```{r}
+R2_zero_AL_0.7 <- numeric(length = max_sent_freq)
+R2_first_AL_0.7 <- numeric(length = max_sent_freq)
+R2_second_AL_0.7 <- numeric(length = max_sent_freq)
+
+sentence_matrix_0.7 <- c()
+
+norm_echoes_matrix_0.7 <- c()
+
+intensities_matrix_AL_0.7 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_AL_0.7 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+  
+its_memory_AL_0.7 <- prior_memory
+
+for(j in 1:max_sent_freq){
+  print(j)
+  intensities <- numeric(length = length(sentence_ids))
+  reconstruction <- numeric(length = length(sentence_ids))
+  sentences <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  normalized_echoes <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- norm_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    sentences[k, ] <- current_sentence
+    activations <- cosine_x_to_m(current_sentence, its_memory_AL_0.7)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory_AL_0.7))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    echo_norm <- norm_vector(echo)
+    normalized_echoes[k, ] <- echo_norm
+    its_memory_AL_0.7 <- rbind(its_memory_AL_0.7, ((current_sentence - echo_norm)*(rbinom(length(current_sentence), 1, L))))
+    }
+  sentence_matrix_0.7 <- rbind(sentence_matrix_0.7, sentences)
+  norm_echoes_matrix_0.7 <- rbind(norm_echoes_matrix_0.7, normalized_echoes)
+  intensities_matrix_AL_0.7[j, ] <- intensities
+  reconst_matrix_AL_0.7[j, ] <- reconstruction
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory_AL_0.7,
+                                                tau=3)
+  cosines_AL_0.7 <- lsa::cosine(t(semantic_vectors))
+  R2_zero_AL_0.7[j] <- cor(c(cosines_AL_0.7),c(zero_order_cosines))^2
+  R2_first_AL_0.7[j] <- cor(c(cosines_AL_0.7),c(first_order_cosines))^2
+  R2_second_AL_0.7[j] <- cor(c(cosines_AL_0.7),c(second_order_cosines))^2
+}
+```
+
+```{r}
+no_de_df_0.7 <- data.frame(learning_rate = "0.7", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix_0.7), rowMeans(intensities_matrix_0.7), R2_zero_0.7, R2_first_0.7, R2_second_0.7)
+colnames(no_de_df_0.7) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+no_de_df_0.7 <- no_de_df_0.7 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+de_df_0.7 <- data.frame(learning_rate = "0.7", condition = "de", sent_freq = 1:10, rowMeans(reconst_matrix_AL_0.7), rowMeans(intensities_matrix_AL_0.7), R2_zero_AL_0.7, R2_first_AL_0.7, R2_second_AL_0.7)
+colnames(de_df_0.7) <- c("learning_rate", "condition", "sent_freq", "reconstruction", "intensity", "zero_order_R2", "first_order_R2", "second_order_R2")
+de_df_0.7 <- de_df_0.7 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
+
+compare_df_0.7 <- bind_rows(no_de_df_0.7, de_df_0.7)
+```
+
+### No discrepancy encoding (L = 0.4)
+
+```{r}
+L <- .4
+
+R2_zero_0.4 <- numeric(length = max_sent_freq)
+R2_first_0.4 <- numeric(length = max_sent_freq)
+R2_second_0.4 <- numeric(length = max_sent_freq)
+
+its_memory <- prior_memory
+
+intensities_matrix_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+  for(j in 1:max_sent_freq){
+    print(j)
+    intensities <- numeric(length = length(sentence_ids))
+    reconstruction <- numeric(length = length(sentence_ids))
+    sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- norm_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    activations <- cosine_x_to_m(current_sentence, its_memory)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    its_memory <- rbind(its_memory, (current_sentence*(rbinom(length(current_sentence), 1, L))))
+    }
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory,
+                                                tau=3)
+  cosines_ITS_0.4 <- lsa::cosine(t(semantic_vectors))
+  R2_zero_0.4[j] <- cor(c(cosines_ITS_0.4),c(zero_order_cosines))^2
+  R2_first_0.4[j] <- cor(c(cosines_ITS_0.4),c(first_order_cosines))^2
+  R2_second_0.4[j] <- cor(c(cosines_ITS_0.4),c(second_order_cosines))^2
+  intensities_matrix_0.4[j, ] <- intensities
+  reconst_matrix_0.4[j, ] <- reconstruction
+}
+```
+
+### MINERVA-AL discrepancy encoding (L = 0.4)
+
+```{r}
+R2_zero_AL_0.4 <- numeric(length = max_sent_freq)
+R2_first_AL_0.4 <- numeric(length = max_sent_freq)
+R2_second_AL_0.4 <- numeric(length = max_sent_freq)
+
+sentence_matrix_0.4 <- c()
+
+norm_echoes_matrix_0.4 <- c()
+
+intensities_matrix_AL_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+
+reconst_matrix_AL_0.4 <- matrix(0, nrow = max_sent_freq, ncol = length(sentence_ids))
+  
+its_memory_AL_0.4 <- prior_memory
+
+for(j in 1:max_sent_freq){
+  print(j)
+  intensities <- numeric(length = length(sentence_ids))
+  reconstruction <- numeric(length = length(sentence_ids))
+  sentences <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  normalized_echoes <- matrix(0, nrow = length(sentence_ids), ncol = ncol(environment_sub))
+  sentence_ids_reordered <- sample(sentence_ids)
+    for(k in 1:length(sentence_ids)) {
+    current_sentence <- norm_vector(colSums(environment_sub[sentence_ids_reordered[[k]],]))
+    sentences[k, ] <- current_sentence
+    activations <- cosine_x_to_m(current_sentence, its_memory_AL_0.4)
+    intensities[k] <- sum(activations^3)
+    echo <- colSums(as.numeric(activations ^ 3) * (its_memory_AL_0.4))
+    reconstruction[k] <- cosine(current_sentence, echo)
+    echo_norm <- norm_vector(echo)
+    normalized_echoes[k, ] <- echo_norm
+    its_memory_AL_0.4 <- rbind(its_memory_AL_0.4, ((current_sentence - echo_norm)*(rbinom(length(current_sentence), 1, L))))
+    }
+  sentence_matrix_0.4 <- rbind(sentence_matrix_0.4, sentences)
+  norm_echoes_matrix_0.4 <- rbind(norm_echoes_matrix_0.4, normalized_echoes)
+  intensities_matrix_AL_0.4[j, ] <- intensities
+  reconst_matrix_AL_0.4[j, ] <- reconstruction
+  semantic_vectors <- subset_semantic_vectors(words_to_plot,
+                                                dictionary_words,
+                                                environment_sub,
+                                                its_memory_AL_0.4,
+                                                tau=3)
+  cosines_AL_0.4 <- lsa::cosine(t(semantic_vectors))
+  R2_zero_AL_0.4[j] <- cor(c(cosines_AL_0.4),c(zero_order_cosines))^2
+  R2_first_AL_0.4[j] <- cor(c(cosines_AL_0.4),c(first_order_cosines))^2
+  R2_second_AL_0.4[j] <- cor(c(cosines_AL_0.4),c(second_order_cosines))^2
+}
+```
 
 ```{r}
 no_de_df_0.4 <- data.frame(learning_rate = "0.4", condition = "no_de", sent_freq = 1:10, rowMeans(reconst_matrix_0.4), rowMeans(intensities_matrix_0.4), R2_zero_0.4, R2_first_0.4, R2_second_0.4)
@@ -437,12 +771,9 @@ colnames(de_df_0.4) <- c("learning_rate", "condition", "sent_freq", "reconstruct
 de_df_0.4 <- de_df_0.4 %>% pivot_longer(c(zero_order_R2, first_order_R2, second_order_R2), names_to = "order_of_sim", values_to = "R_squared")
 
 compare_df_0.4 <- bind_rows(no_de_df_0.4, de_df_0.4)
-ggplot(compare_df_0.4, aes(x = sent_freq, y = reconstruction, color = condition)) + geom_line()
-ggplot(compare_df_0.4, aes(x = sent_freq, y = intensity, color = condition)) + geom_line()
-ggplot(compare_df_0.4, aes(x = sent_freq, y = R_squared, color = order_of_sim)) + geom_line() + facet_wrap(vars(condition))
 ```
 
-## In summary...
+### Summary for rectifying procedure
 
 ```{r}
 complete_df <- bind_rows(compare_df_perfect, compare_df_0.7, compare_df_0.4)
@@ -452,8 +783,8 @@ ggplot(complete_df, aes(x = sent_freq, y = intensity, color = learning_rate)) + 
 ggplot(complete_df, aes(x = sent_freq, y = R_squared, color = order_of_sim, linetype = condition)) + geom_line() + facet_wrap(vars(learning_rate))
 ```
 
-The zero-order correlations have a negative, almost mirror-like relationship with the first- and second-order correlations. This seems different from the almost-parallel curves we were getting with one-hot encoding?
+With normalization, reconstruction in ITS-DE [increases]{.underline} with decreasing L and is overall lower than that in ITS vanilla. This is in contrast with the results in the rectifying procedure, as reconstruction there decreases with lower L and is overall higher than that in ITS vanilla.
 
-Reordering the sentences leads to lower zero-order correlations in ITS-DE.
+Intensity values in the normalization procedure are the same regardless of L and rises minimally as sentence frequency increases.
 
-Also, the decision to rectify or normalize the target sentence and the echo matters. In Matt's simulations, we have chosen to rectify the target sentence and normalize the echo. Here, I've attempted to rectify both sentence and echo (to keep the way we handle values consistent). As a result, the intensity values seem to plateau (and even start to dip with increasing frequency of presentation) when L = 1, and increases very gradually when L = 0.7.
+Instead of the mirror-effect between zero- and first-/second-order similarities, all the R-squared values are directionally in tandem, similar to what we were getting last week with the one-hot encoding procedure. Generally, they all increase with decreasing L.
